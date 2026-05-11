@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useGameStore } from '../store'
 import { resolvePlayerAttack } from '../systems/combatResolution'
 import { processEnemyTurn } from '../systems/enemyAI'
@@ -9,6 +9,7 @@ export function CombatOverlay() {
   const combatState = useGameStore((s) => s.combatState)
   const selectedIndex = useGameStore((s) => s.selectedMemberIndex)
   const currentTargetEnemyId = useGameStore((s) => s.currentTargetEnemyId)
+  const inventory = useGameStore((s) => s.inventory)
 
   const setCombatState = useGameStore((s) => s.setCombatState)
   const setCurrentTargetEnemyId = useGameStore((s) => s.setCurrentTargetEnemyId)
@@ -16,10 +17,13 @@ export function CombatOverlay() {
   const setDefending = useGameStore((s) => s.setDefending)
   const addLogMessage = useGameStore((s) => s.addLogMessage)
   const endCombat = useGameStore((s) => s.endCombat)
+  const useItem = useGameStore((s) => s.useItem)
 
   const enemyTurnRef = useRef(false)
+  const [showItemMenu, setShowItemMenu] = useState(false)
 
   const aliveEnemies = enemies.filter((e) => e.hp > 0)
+  const consumables = inventory.filter((i) => i.consumable)
 
   useEffect(() => {
     if (combatState === 'enemyTurn' && !enemyTurnRef.current) {
@@ -51,7 +55,12 @@ export function CombatOverlay() {
       return
     }
 
-    const result = resolvePlayerAttack(member.str, target.ac)
+    // Get equipped weapon info
+    const weapon = member.equipment.weapon
+    const weaponDice = weapon?.effects.damageDice
+    const weaponBonus = weapon?.effects.damageBonus
+
+    const result = resolvePlayerAttack(member.str, target.ac, weaponDice, weaponBonus)
     if (result.hit) {
       damageEnemy(target.id, result.damage)
       addLogMessage(`${member.name} attacks ${target.name} for ${result.damage} damage!`)
@@ -75,6 +84,13 @@ export function CombatOverlay() {
     if (combatState !== 'playerTurn') return
     setDefending(selectedIndex, true)
     addLogMessage(`${party[selectedIndex]?.name} takes a defensive stance.`)
+    setCombatState('enemyTurn')
+  }
+
+  const handleUseItem = (itemId: string) => {
+    if (combatState !== 'playerTurn') return
+    useItem(itemId, selectedIndex)
+    setShowItemMenu(false)
     setCombatState('enemyTurn')
   }
 
@@ -107,7 +123,33 @@ export function CombatOverlay() {
         <div className="combat-actions">
           <button className="combat-btn" onClick={handleAttack}>Attack</button>
           <button className="combat-btn" onClick={handleDefend}>Defend</button>
-          <button className="combat-btn" disabled>Use Item</button>
+          <button
+            className="combat-btn"
+            onClick={() => setShowItemMenu(!showItemMenu)}
+            disabled={consumables.length === 0}
+          >
+            Use Item{consumables.length > 0 && ` (${consumables.length})`}
+          </button>
+        </div>
+      )}
+
+      {showItemMenu && combatState === 'playerTurn' && (
+        <div className="combat-item-menu">
+          {consumables.map((item) => (
+            <button
+              key={item.id}
+              className="combat-item-btn"
+              onClick={() => handleUseItem(item.id)}
+            >
+              {item.name} — {item.description}
+            </button>
+          ))}
+          <button
+            className="combat-item-btn combat-item-cancel"
+            onClick={() => setShowItemMenu(false)}
+          >
+            Cancel
+          </button>
         </div>
       )}
 

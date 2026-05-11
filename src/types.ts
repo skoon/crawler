@@ -1,3 +1,5 @@
+export type EquipSlot = 'weapon' | 'armor' | 'shield' | 'ring1' | 'ring2';
+
 export interface PartyMember {
   id: string;
   name: string;
@@ -14,6 +16,7 @@ export interface PartyMember {
   cha: number;
   xp: number;
   status: string[];
+  equipment: Partial<Record<EquipSlot, Item>>;
 }
 
 export interface TilePosition {
@@ -115,6 +118,9 @@ export interface GameState {
   pickupItem: (tileX: number, tileY: number) => void;
   removeMapItem: (tileX: number, tileY: number) => void;
   addToInventory: (item: Item) => void;
+  equipItem: (memberIndex: number, slot: EquipSlot, item: Item) => void;
+  unequipItem: (memberIndex: number, slot: EquipSlot) => void;
+  useItem: (itemId: string, memberIndex: number) => void;
 }
 
 export const TILE_WALL = 0;

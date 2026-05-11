@@ -1,13 +1,13 @@
 import { create } from 'zustand'
-import type { GameState, PartyMember } from './types'
+import type { GameState, PartyMember, EquipSlot } from './types'
 import { sampleDungeon, sampleEncounters, sampleMapItems } from './map/sampleDungeon'
 import { isOpaque } from './map/mapUtils'
 
 const party: PartyMember[] = [
-  { id: '1', name: 'Aldric', class: 'Fighter', level: 1, hp: 12, maxHp: 12, ac: 18, str: 16, dex: 12, con: 14, int: 10, wis: 8, cha: 11, xp: 0, status: [] },
-  { id: '2', name: 'Elara', class: 'Mage', level: 1, hp: 6, maxHp: 6, ac: 10, str: 8, dex: 10, con: 10, int: 17, wis: 14, cha: 12, xp: 0, status: [] },
-  { id: '3', name: 'Brother Malek', class: 'Cleric', level: 1, hp: 10, maxHp: 10, ac: 16, str: 12, dex: 10, con: 12, int: 12, wis: 16, cha: 14, xp: 0, status: [] },
-  { id: '4', name: 'Shadow', class: 'Thief', level: 1, hp: 8, maxHp: 8, ac: 14, str: 10, dex: 16, con: 10, int: 13, wis: 10, cha: 9, xp: 0, status: [] },
+  { id: '1', name: 'Aldric', class: 'Fighter', level: 1, hp: 12, maxHp: 12, ac: 18, str: 16, dex: 12, con: 14, int: 10, wis: 8, cha: 11, xp: 0, status: [], equipment: {} },
+  { id: '2', name: 'Elara', class: 'Mage', level: 1, hp: 6, maxHp: 6, ac: 10, str: 8, dex: 10, con: 10, int: 17, wis: 14, cha: 12, xp: 0, status: [], equipment: {} },
+  { id: '3', name: 'Brother Malek', class: 'Cleric', level: 1, hp: 10, maxHp: 10, ac: 16, str: 12, dex: 10, con: 12, int: 12, wis: 16, cha: 14, xp: 0, status: [], equipment: {} },
+  { id: '4', name: 'Shadow', class: 'Thief', level: 1, hp: 8, maxHp: 8, ac: 14, str: 10, dex: 16, con: 10, int: 13, wis: 10, cha: 9, xp: 0, status: [], equipment: {} },
 ]
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -136,4 +136,62 @@ export const useGameStore = create<GameState>((set, get) => ({
   addToInventory: (item) => set((state) => ({
     inventory: [...state.inventory, item],
   })),
+
+  equipItem: (memberIndex, slot, item) => set((state) => {
+    const member = state.party[memberIndex]
+    if (!member) return state
+    const oldItem = member.equipment[slot]
+    const newInventory = state.inventory.filter((i) => i.id !== item.id)
+    if (oldItem) newInventory.push(oldItem)
+    return {
+      party: state.party.map((m, i) =>
+        i === memberIndex ? { ...m, equipment: { ...m.equipment, [slot]: item } } : m
+      ),
+      inventory: newInventory,
+      log: [...state.log, `${member.name} equips ${item.name}.`],
+    }
+  }),
+
+  unequipItem: (memberIndex, slot) => set((state) => {
+    const member = state.party[memberIndex]
+    if (!member) return state
+    const item = member.equipment[slot]
+    if (!item) return state
+    const newEquipment = { ...member.equipment }
+    delete newEquipment[slot]
+    return {
+      party: state.party.map((m, i) =>
+        i === memberIndex ? { ...m, equipment: newEquipment } : m
+      ),
+      inventory: [...state.inventory, item],
+      log: [...state.log, `${member.name} unequips ${item.name}.`],
+    }
+  }),
+
+  useItem: (itemId, memberIndex) => set((state) => {
+    const item = state.inventory.find((i) => i.id === itemId)
+    if (!item || !item.consumable) return state
+    const member = state.party[memberIndex]
+    if (!member || member.hp <= 0) return state
+
+    let logMsg = `${member.name} uses ${item.name}.`
+    let newParty = state.party
+
+    if (item.type === 'potion' && item.effects.hpBonus !== undefined) {
+      // Healing potion: roll 2d4
+      const heal = Array.from({ length: 2 }, () => Math.floor(Math.random() * 4) + 1).reduce((a, b) => a + b, 0)
+      const newHp = Math.min(member.maxHp, member.hp + heal)
+      const actualHeal = newHp - member.hp
+      logMsg = `${member.name} drinks ${item.name} and heals ${actualHeal} HP.`
+      newParty = state.party.map((m, i) =>
+        i === memberIndex ? { ...m, hp: newHp } : m
+      )
+    }
+
+    return {
+      party: newParty,
+      inventory: state.inventory.filter((i) => i.id !== itemId),
+      log: [...state.log, logMsg],
+    }
+  }),
 }))

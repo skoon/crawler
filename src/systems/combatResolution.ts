@@ -23,11 +23,15 @@ function getStrDamageBonus(str: number): number {
 export function resolvePlayerAttack(
   attackerStr: number,
   targetAc: number,
+  weaponDamageDice?: string,
+  weaponDamageBonus?: number,
 ): { hit: boolean; damage: number } {
   const roll = rollD20()
   const thac0 = BASE_THAC0
   const hit = roll >= thac0 - targetAc
-  const damage = hit ? Math.max(1, rollDice('1d8') + getStrDamageBonus(attackerStr)) : 0
+  const dice = weaponDamageDice || '1d4' // Fists if no weapon
+  const bonus = (weaponDamageBonus ?? 0) + getStrDamageBonus(attackerStr)
+  const damage = hit ? Math.max(1, rollDice(dice) + bonus) : 0
   return { hit, damage }
 }
 

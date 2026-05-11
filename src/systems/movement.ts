@@ -36,8 +36,8 @@ export function useMovementSystem() {
       const interact = pressed.has('Space') || pressed.has('Enter')
       const forward = pressed.has('ArrowUp') || pressed.has('KeyW')
       const backward = pressed.has('ArrowDown') || pressed.has('KeyS')
-      const left = pressed.has('ArrowLeft')
-      const right = pressed.has('ArrowRight')
+      const left = pressed.has('ArrowLeft') || pressed.has('KeyA')
+      const right = pressed.has('ArrowRight') || pressed.has('KeyD')
       const shift = pressed.has('ShiftLeft') || pressed.has('ShiftRight')
 
       if (interact) {
@@ -71,13 +71,13 @@ export function useMovementSystem() {
         else if (facing === 2) { dx = -1 }
         else if (facing === 3) { dy = -1 }
       } else if (left) {
-        turn = -1
-      } else if (right) {
         turn = 1
+      } else if (right) {
+        turn = -1
       }
 
       if (forward || backward) {
-        const dir = backward ? -1 : 1
+        const dir = backward ? 1 : -1
         const facing = state.playerFacing
         if (facing === 0) { dy = -dir }
         else if (facing === 1) { dx = dir }

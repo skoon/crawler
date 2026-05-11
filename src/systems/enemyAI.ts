@@ -80,7 +80,12 @@ export function processEnemyTurn() {
       const target = party[targetIdx]
       if (!target || target.hp <= 0) continue
 
-      const result = resolveEnemyAttack(enemy.thac0, enemy.damage, enemy.damageBonus, target.ac)
+      // Calculate AC bonus from equipment
+      const acBonus = Object.values(target.equipment ?? {}).reduce(
+        (sum, item) => sum + (item?.effects.acBonus ?? 0), 0
+      )
+
+      const result = resolveEnemyAttack(enemy.thac0, enemy.damage, enemy.damageBonus, target.ac - acBonus)
       if (result.hit) {
         state.damageMember(targetIdx, result.damage)
         state.addLogMessage(`${enemy.name} hits ${target.name} for ${result.damage} damage!`)
