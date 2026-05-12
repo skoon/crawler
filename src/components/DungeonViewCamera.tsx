@@ -3,12 +3,13 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { Vector3, MathUtils } from 'three'
 import { useGameStore } from '../store'
 
-// Use continuous positive angles so adjacent facings never cross the ±π boundary
+// In Three.js, positive Y rotation turns left (counter-clockwise).
+// North (-Z) is 0, East (+X) is clockwise (-PI/2), South (+Z) is PI, West (-X) is counter-clockwise (+PI/2).
 const FACING_ANGLES: Record<number, number> = {
   0: 0,                     // North
-  1: Math.PI / 2,           // East
+  1: -Math.PI / 2,          // East
   2: Math.PI,               // South
-  3: (3 * Math.PI) / 2,     // West  (was -π/2, now 3π/2 — same direction, no wrap)
+  3: Math.PI / 2,           // West
 }
 
 const LERP_FACTOR = 0.1

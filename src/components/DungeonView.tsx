@@ -2,6 +2,10 @@ import { useMemo } from 'react'
 import { useGameStore } from '../store'
 import { isOpaque, isDoor } from '../map/mapUtils'
 import { TILE_WALL, TILE_SECRET_DOOR } from '../types'
+import type { MapItem } from '../types'
+import { useFrame } from '@react-three/fiber'
+import { Mesh } from 'three'
+import { useRef } from 'react'
 import { EnemyBillboard } from './EnemyBillboard'
 import { useTexture } from '@react-three/drei'
 import { RepeatWrapping } from 'three'
@@ -16,12 +20,44 @@ const ENEMY_COLORS: Record<string, string> = {
   Skeleton: '#c8b090',
 }
 
+function ItemPrimitive({ mapItem }: { mapItem: MapItem }) {
+  const meshRef = useRef<Mesh>(null)
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.02
+      meshRef.current.position.y = 0.3 + Math.sin(state.clock.elapsedTime * 2 + mapItem.tileX * 10) * 0.05
+    }
+  })
+
+  const typeColors: Record<string, string> = {
+    weapon: '#aaaaaa',
+    armor: '#4444aa',
+    potion: '#aa4444',
+    shield: '#44aa44',
+    ring: '#aaaa44',
+  }
+  const color = typeColors[mapItem.item.type] || '#ffffff'
+
+  return (
+    <mesh
+      ref={meshRef}
+      position={[mapItem.tileX + 0.5, 0.3, mapItem.tileY + 0.5]}
+      rotation={[Math.PI / 4, 0, Math.PI / 4]}
+    >
+      <boxGeometry args={[0.2, 0.2, 0.2]} />
+      <meshStandardMaterial color={color} />
+    </mesh>
+  )
+}
+
 export function DungeonView() {
   const dungeonMap = useGameStore((s) => s.dungeonMap)
   const enemies = useGameStore((s) => s.enemies)
   const doorStates = useGameStore((s) => s.doorStates)
   const secretDoorsRevealed = useGameStore((s) => s.secretDoorsRevealed)
   const exploredTiles = useGameStore((s) => s.exploredTiles)
+  const mapItems = useGameStore((s) => s.mapItems)
 
   const wallTexture = useTexture(wallImg)
   const floorTexture = useTexture(floorImg)
@@ -173,5 +209,13 @@ export function DungeonView() {
     [enemies],
   )
 
-  return <>{meshes}{enemySprites}</>
+  const itemPrimitives = useMemo(
+    () =>
+      mapItems.map((mapItem) => (
+        <ItemPrimitive key={`item-${mapItem.item.id}-${mapItem.tileX}-${mapItem.tileY}`} mapItem={mapItem} />
+      )),
+    [mapItems],
+  )
+
+  return <>{meshes}{enemySprites}{itemPrimitives}</>
 }
