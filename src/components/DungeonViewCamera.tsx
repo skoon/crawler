@@ -28,6 +28,7 @@ export function DungeonViewCamera() {
   const playerFacing = useGameStore((s) => s.playerFacing)
   const targetPos = useRef(new Vector3())
   const targetAngleY = useRef(0)
+  const lightRef = useRef<any>(null)
 
   targetPos.current.set(playerPosition.x + 0.5, 1.6, playerPosition.y + 0.5)
   targetAngleY.current = FACING_ANGLES[playerFacing] ?? 0
@@ -39,7 +40,20 @@ export function DungeonViewCamera() {
     // x and z rotations stay at 0 (no pitch/roll in a dungeon crawler)
     camera.rotation.x *= (1 - LERP_FACTOR)
     camera.rotation.z *= (1 - LERP_FACTOR)
+
+    // Sync torchlight with camera position
+    if (lightRef.current) {
+      lightRef.current.position.copy(camera.position)
+    }
   })
 
-  return null
+  return (
+    <pointLight 
+      ref={lightRef} 
+      distance={8} 
+      decay={2} 
+      intensity={2.5} 
+      color="#ffddaa" 
+    />
+  )
 }
