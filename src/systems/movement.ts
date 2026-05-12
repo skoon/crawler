@@ -7,12 +7,14 @@ import { saveGame, loadGame } from './saveLoad'
 
 const MOVE_INTERVAL = 150
 
-export function useMovementSystem() {
+export function useMovementSystem(isPaused: boolean = false) {
   const keys = useKeyboard()
   const lastMove = useRef(0)
 
   useEffect(() => {
     const handler = () => {
+      if (isPaused) return
+      
       const now = Date.now()
       if (now - lastMove.current < MOVE_INTERVAL) return
 
@@ -106,5 +108,5 @@ export function useMovementSystem() {
 
     const id = setInterval(handler, MOVE_INTERVAL / 2)
     return () => clearInterval(id)
-  }, [keys])
+  }, [keys, isPaused])
 }

@@ -1068,6 +1068,19 @@ Create a main menu and polish the UI with an old-school theme.
 4. Verify with `npm run build`.
 ```
 
+### M13 — Multi-Level Architecture
+- Refactor `GameState` to scope entities (items, doors, enemies, explored tiles) to specific `levelId`s.
+- Implement `TILE_STAIRS_UP` and `TILE_STAIRS_DOWN` transitions.
+
+### M14 — JSON Dungeon Format & Loader
+- Standardize the JSON schema for maps (dimensions, tiles, initial enemies, item spawns, secret doors, transitions).
+- Build a level loader that populates the Zustand store based on the active level data.
+
+### M15 — In-Browser Map Builder
+- Create an `/editor` route for a 2D tile-painting interface.
+- Allow placement of walls, doors, items, enemies, and stairs.
+- Export visually designed maps directly to the M14 JSON format.
+
 ---
 
 ## Getting Started

@@ -8,17 +8,35 @@ import { useMovementSystem } from './systems/movement'
 import { useEncounterCheck } from './systems/encounterCheck'
 import { useItemPickup } from './systems/itemPickup'
 import { useSecretDoorDetect } from './systems/secretDoorDetect'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useFogOfWar } from './systems/fogOfWar'
 import { MainMenu } from './components/MainMenu'
+import { InGameMenu } from './components/InGameMenu'
 import './App.css'
+import { useGameStore } from './store'
 
-function Game() {
-  useMovementSystem()
+interface GameProps {
+  onQuit: () => void
+}
+
+function Game({ onQuit }: GameProps) {
+  const [isPaused, setIsPaused] = useState(false)
+  useMovementSystem(isPaused)
   useEncounterCheck()
   useItemPickup()
   useSecretDoorDetect()
   useFogOfWar()
+
+  // Handle Escape to toggle pause
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Escape') {
+        setIsPaused(p => !p)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
     <div className="app">
@@ -33,6 +51,7 @@ function Game() {
             <DungeonViewCamera />
           </Canvas>
           <CombatOverlay />
+          {isPaused && <InGameMenu onClose={() => setIsPaused(false)} onQuit={onQuit} />}
         </div>
       </main>
       <aside className="pane pane-right">
@@ -49,7 +68,7 @@ function App() {
     return <MainMenu onStart={() => setGameStarted(true)} />
   }
 
-  return <Game />
+  return <Game onQuit={() => setGameStarted(false)} />
 }
 
 export default App
