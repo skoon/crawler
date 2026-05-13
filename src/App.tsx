@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react'
 import { useFogOfWar } from './systems/fogOfWar'
 import { MainMenu } from './components/MainMenu'
 import { InGameMenu } from './components/InGameMenu'
+import { Editor } from './components/editor/Editor'
 import './App.css'
 import { useGameStore } from './store'
 
@@ -27,7 +28,6 @@ function Game({ onQuit }: GameProps) {
   useSecretDoorDetect()
   useFogOfWar()
 
-  // Handle Escape to toggle pause
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Escape') {
@@ -62,13 +62,23 @@ function Game({ onQuit }: GameProps) {
 }
 
 function App() {
-  const [gameStarted, setGameStarted] = useState(false)
+  const [route, setRoute] = useState<'menu' | 'game' | 'editor'>('menu')
 
-  if (!gameStarted) {
-    return <MainMenu onStart={() => setGameStarted(true)} />
+  if (route === 'editor') {
+    return <Editor 
+      onExit={() => setRoute('menu')} 
+      onTest={(lvl) => {
+        useGameStore.getState().loadLevel(lvl)
+        setRoute('game')
+      }} 
+    />
   }
 
-  return <Game onQuit={() => setGameStarted(false)} />
+  if (route === 'game') {
+    return <Game onQuit={() => setRoute('menu')} />
+  }
+
+  return <MainMenu onStart={() => setRoute('game')} onEditor={() => setRoute('editor')} />
 }
 
 export default App

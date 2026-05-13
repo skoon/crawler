@@ -194,4 +194,21 @@ export const useGameStore = create<GameState>((set, get) => ({
       log: [...state.log, logMsg],
     }
   }),
+
+  loadLevel: (level) => set({
+    dungeonMap: level.tiles,
+    playerPosition: level.startPosition,
+    playerFacing: level.startFacing,
+    encounterTriggers: level.encounters,
+    mapItems: level.items,
+    floorTexture: level.floorTexture,
+    wallTexture: level.wallTexture,
+    combatState: 'idle',
+    enemies: [],
+    doorStates: {},
+    secretDoorsRevealed: {},
+    exploredTiles: {},
+    currentTargetEnemyId: null,
+    defendingMemberIds: [],
+  }),
 }))

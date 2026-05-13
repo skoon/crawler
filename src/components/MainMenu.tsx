@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react'
 import { loadGame, getSaveSlots } from '../systems/saveLoad'
+import { useGameStore } from '../store'
+import catacombsLevel from '../map/catacombs_1.json'
+import type { LevelData } from '../types'
 
 interface Props {
   onStart: () => void
+  onEditor: () => void
 }
 
-export function MainMenu({ onStart }: Props) {
+export function MainMenu({ onStart, onEditor }: Props) {
   const [view, setView] = useState<'main' | 'about' | 'load'>('main')
   const [slots, setSlots] = useState<{ slot: number; timestamp: string }[]>([])
 
@@ -19,6 +23,11 @@ export function MainMenu({ onStart }: Props) {
     if (loadGame(slot)) {
       onStart()
     }
+  }
+
+  const handleNewGame = () => {
+    useGameStore.getState().loadLevel(catacombsLevel as LevelData)
+    onStart()
   }
 
   if (view === 'about') {
@@ -62,8 +71,9 @@ export function MainMenu({ onStart }: Props) {
     <div className="main-menu">
       <h1>Dungeon of the Catacombs</h1>
       <h2>A First-Person Dungeon Crawl</h2>
-      <button onClick={onStart}>New Game</button>
+      <button onClick={handleNewGame}>New Game</button>
       <button onClick={() => setView('load')}>Load Game</button>
+      <button onClick={onEditor}>Level Editor</button>
       <button onClick={() => setView('about')}>About</button>
     </div>
   )

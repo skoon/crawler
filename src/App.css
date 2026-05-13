@@ -303,3 +303,88 @@
   border: 2px solid;
   border-color: #050505 #2a2a2a #2a2a2a #050505;
 }
+
+/* ─── Editor UI ─── */
+.editor-layout {
+  display: flex;
+  height: 100vh;
+  background: #050505;
+  color: #ccc;
+  font-family: sans-serif; /* Cleaner font for tools */
+}
+
+.editor-canvas-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: auto;
+}
+
+.editor-sidebar {
+  width: 320px;
+  background: #111;
+  border-left: 2px solid #222;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.editor-sidebar h2 {
+  color: #e8d5a3;
+  font-family: 'Palatino Linotype', serif;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.editor-panel {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.editor-panel h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #aaa;
+  text-transform: uppercase;
+}
+
+.editor-panel label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.editor-panel input, .editor-panel select {
+  background: #000;
+  border: 1px solid #444;
+  color: #ccc;
+  padding: 4px;
+  width: 60%;
+}
+
+.editor-sidebar button {
+  padding: 8px 12px;
+  background: #222;
+  color: #ccc;
+  border: 1px solid #444;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.editor-sidebar button:hover {
+  background: #333;
+  color: #fff;
+}
+
+.editor-sidebar button.active {
+  background: #444;
+  border-color: #e8d5a3;
+  color: #e8d5a3;
+}

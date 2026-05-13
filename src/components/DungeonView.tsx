@@ -58,9 +58,11 @@ export function DungeonView() {
   const secretDoorsRevealed = useGameStore((s) => s.secretDoorsRevealed)
   const exploredTiles = useGameStore((s) => s.exploredTiles)
   const mapItems = useGameStore((s) => s.mapItems)
+  const storeWallTexture = useGameStore((s) => s.wallTexture)
+  const storeFloorTexture = useGameStore((s) => s.floorTexture)
 
-  const wallTexture = useTexture(wallImg)
-  const floorTexture = useTexture(floorImg)
+  const wallTexture = useTexture(storeWallTexture || wallImg)
+  const floorTexture = useTexture(storeFloorTexture || floorImg)
 
   wallTexture.wrapS = wallTexture.wrapT = RepeatWrapping
   wallTexture.repeat.set(1, 3)

@@ -1,0 +1,46 @@
+{
+  "id": "catacombs_1",
+  "name": "The Catacombs",
+  "width": 12,
+  "height": 12,
+  "startPosition": { "x": 2, "y": 2 },
+  "startFacing": 0,
+  "tiles": [
+    [0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,1,1,1,0,1,1,1,1,1,0],
+    [0,1,1,1,1,0,1,1,1,1,1,0],
+    [0,1,1,1,1,6,1,1,1,1,1,0],
+    [0,1,1,1,1,0,1,1,1,1,1,0],
+    [0,0,0,0,0,0,0,7,3,0,0,0],
+    [0,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0]
+  ],
+  "encounters": [
+    {
+      "x": 7, "y": 3,
+      "enemies": [{"name": "Goblin", "hp": 6, "maxHp": 6, "ac": 13, "thac0": 19, "damage": "1d6", "damageBonus": 0, "xp": 15}]
+    },
+    {
+      "x": 5, "y": 8,
+      "enemies": [{"name": "Skeleton", "hp": 8, "maxHp": 8, "ac": 14, "thac0": 18, "damage": "1d8", "damageBonus": 0, "xp": 25}]
+    }
+  ],
+  "items": [
+    {
+      "item": { "id": "short-sword", "name": "Short Sword", "type": "weapon", "weight": 3, "description": "A sharp iron blade", "effects": { "damageDice": "1d6", "damageBonus": 0 }, "consumable": false },
+      "tileX": 3, "tileY": 2
+    },
+    {
+      "item": { "id": "healing-potion", "name": "Healing Potion", "type": "potion", "weight": 0.5, "description": "Restores 2d4 HP", "effects": { "hpBonus": 0 }, "consumable": true },
+      "tileX": 8, "tileY": 7
+    },
+    {
+      "item": { "id": "leather-armor", "name": "Leather Armor", "type": "armor", "weight": 10, "description": "Hardened leather protection", "effects": { "acBonus": 2 }, "consumable": false },
+      "tileX": 4, "tileY": 9
+    }
+  ]
+}

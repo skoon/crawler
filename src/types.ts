@@ -24,13 +24,18 @@ export interface TilePosition {
   y: number;
 }
 
-export interface MapData {
+export interface LevelData {
+  id: string;
+  name: string;
   width: number;
   height: number;
   tiles: number[][];
   startPosition: TilePosition;
   startFacing: number;
-  name: string;
+  encounters: EncounterTrigger[];
+  items: Omit<MapItem, 'id'>[]; // Use Omit if mapItems don't have ids, but actually MapItem is { item: Item, tileX, tileY }. Let's just use MapItem.
+  floorTexture?: string;
+  wallTexture?: string;
 }
 
 export interface Enemy {
@@ -87,6 +92,8 @@ export interface GameState {
   playerPosition: TilePosition;
   playerFacing: number;
   dungeonMap: number[][];
+  floorTexture?: string;
+  wallTexture?: string;
   log: string[];
   combatState: CombatState;
   enemies: Enemy[];
@@ -121,6 +128,7 @@ export interface GameState {
   equipItem: (memberIndex: number, slot: EquipSlot, item: Item) => void;
   unequipItem: (memberIndex: number, slot: EquipSlot) => void;
   useItem: (itemId: string, memberIndex: number) => void;
+  loadLevel: (level: LevelData) => void;
 }
 
 export const TILE_WALL = 0;
