@@ -1081,6 +1081,30 @@ Create a main menu and polish the UI with an old-school theme.
 - Allow placement of walls, doors, items, enemies, and stairs.
 - Export visually designed maps directly to the M14 JSON format.
 
+## Phase 3: Gameplay & Advanced Systems
+
+### M16 — Advanced Combat & Magic System
+- Introduce MP (Mana Points) to characters.
+- Add a "Cast" action to combat, supporting various spell types (Fireball, Heal, Sleep).
+- Implement status effects (Poison, Paralysis, Buffs/Debuffs) that persist across turns.
+
+### M17 — Interactive Puzzles & Traps
+- Introduce new map entities: Pressure Plates, Teleporters, and Hidden Traps.
+- Build a "Trigger" system allowing switches to open distant secret doors or trigger traps.
+
+### M18 — The Automap
+- Create a 2D minimap overlay that reads from the `exploredTiles` state.
+- Render the map as the player explores, helping navigation in complex dungeons.
+
+### M19 — NPCs, Dialogue, & Shops
+- Allow placement of friendly NPCs on the map.
+- Implement a modal dialogue tree system.
+- Add a Shop UI where players can spend gold to buy gear or consumables.
+
+### M20 — Dungeon Modules (ZIP Imports)
+- Implement `JSZip` to bundle multiple JSON levels, custom textures, and a manifest into a `.zip` module.
+- Build an import handler allowing players to load entire standalone campaigns at once.
+
 ---
 
 ## Getting Started
