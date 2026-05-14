@@ -9,8 +9,10 @@ import { useRef } from 'react'
 import { EnemyBillboard } from './EnemyBillboard'
 import { useTexture } from '@react-three/drei'
 import { RepeatWrapping } from 'three'
-import wallImg from '../assets/textures/wall.jpg'
-import floorImg from '../assets/textures/floor.jpg'
+import wallImg from '../assets/textures/wall1.jpg'
+import floorImg from '../assets/textures/floor1.jpg'
+import ceilingImg from '../assets/textures/ceiling1.jpg'
+import doorImg from '../assets/textures/closed_door.jpg'
 
 const WALL_HEIGHT = 3
 const WALL_THICKNESS = 0.1
@@ -63,11 +65,15 @@ export function DungeonView() {
 
   const wallTexture = useTexture(storeWallTexture || wallImg)
   const floorTexture = useTexture(storeFloorTexture || floorImg)
+  const ceilingTexture = useTexture(ceilingImg)
+  const doorTexture = useTexture(doorImg)
 
   wallTexture.wrapS = wallTexture.wrapT = RepeatWrapping
   wallTexture.repeat.set(1, 3)
   floorTexture.wrapS = floorTexture.wrapT = RepeatWrapping
   floorTexture.repeat.set(1, 1)
+  ceilingTexture.wrapS = ceilingTexture.wrapT = RepeatWrapping
+  ceilingTexture.repeat.set(1, 1)
 
   const meshes = useMemo(() => {
     const elements: React.ReactNode[] = []
@@ -103,7 +109,7 @@ export function DungeonView() {
             rotation={[Math.PI / 2, 0, 0]}
           >
             <planeGeometry args={[1, 1]} />
-            <meshStandardMaterial color="#222" />
+            <meshStandardMaterial map={ceilingTexture} />
           </mesh>,
         )
         key++
@@ -184,7 +190,7 @@ export function DungeonView() {
                 position={[x + 0.5, WALL_HEIGHT / 2, y + 0.5]}
               >
                 <boxGeometry args={[0.9, WALL_HEIGHT, 0.1]} />
-                <meshStandardMaterial color="#654321" />
+                <meshStandardMaterial map={doorTexture} />
               </mesh>,
             )
             key++
