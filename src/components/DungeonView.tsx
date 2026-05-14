@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useGameStore } from '../store'
 import { isOpaque, isDoor } from '../map/mapUtils'
-import { TILE_WALL, TILE_SECRET_DOOR } from '../types'
+import { TILE_SIZE, TILE_WALL, TILE_SECRET_DOOR } from '../types'
 import type { MapItem } from '../types'
 import { useFrame } from '@react-three/fiber'
 import { Mesh } from 'three'
@@ -44,7 +44,7 @@ function ItemPrimitive({ mapItem }: { mapItem: MapItem }) {
   return (
     <mesh
       ref={meshRef}
-      position={[mapItem.tileX + 0.5, 0.3, mapItem.tileY + 0.5]}
+      position={[mapItem.tileX * TILE_SIZE + TILE_SIZE / 2, 0.3, mapItem.tileY * TILE_SIZE + TILE_SIZE / 2]}
       rotation={[Math.PI / 4, 0, Math.PI / 4]}
     >
       <boxGeometry args={[0.2, 0.2, 0.2]} />
@@ -69,11 +69,11 @@ export function DungeonView() {
   const doorTexture = useTexture(doorImg)
 
   wallTexture.wrapS = wallTexture.wrapT = RepeatWrapping
-  wallTexture.repeat.set(1, 3)
+  wallTexture.repeat.set(1, 1)
   floorTexture.wrapS = floorTexture.wrapT = RepeatWrapping
-  floorTexture.repeat.set(1, 1)
+  floorTexture.repeat.set(2, 2)
   ceilingTexture.wrapS = ceilingTexture.wrapT = RepeatWrapping
-  ceilingTexture.repeat.set(1, 1)
+  ceilingTexture.repeat.set(2, 2)
 
   const meshes = useMemo(() => {
     const elements: React.ReactNode[] = []
@@ -81,121 +81,73 @@ export function DungeonView() {
     const width = dungeonMap[0].length
     let key = 0
 
+    const localIsOpaque = (t: number, tx: number, ty: number) => {
+      if (t === TILE_SECRET_DOOR) {
+        return !secretDoorsRevealed[`${tx},${ty}`]
+      }
+      if (isDoor(t)) {
+        return !doorStates[`${tx},${ty}`]
+      }
+      return isOpaque(t)
+    }
+
+    // Helper to get tile safely
+    const getTileSafe = (nx: number, ny: number) => {
+      if (ny < 0 || ny >= height || nx < 0 || nx >= width) return TILE_WALL
+      return dungeonMap[ny][nx]
+    }
+
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const tile = dungeonMap[y][x]
-        if (tile === TILE_WALL) continue
-        if (tile === TILE_SECRET_DOOR && !secretDoorsRevealed[`${x},${y}`]) continue
+        const isTileOpaque = localIsOpaque(tile, x, y)
+        
+        // If this tile is opaque (Wall, Closed Door, Hidden Secret Door), we don't render its floor/ceiling
+        // and we don't cast walls outward. Walls are cast inward from transparent tiles.
+        if (isTileOpaque) continue
         if (!exploredTiles[`${x},${y}`]) continue
 
         // Floor
         elements.push(
-          <mesh
-            key={`floor-${x}-${y}`}
-            position={[x + 0.5, 0, y + 0.5]}
-            rotation={[-Math.PI / 2, 0, 0]}
-          >
-            <planeGeometry args={[1, 1]} />
+          <mesh key={`floor-${x}-${y}`} position={[x * TILE_SIZE + TILE_SIZE / 2, 0, y * TILE_SIZE + TILE_SIZE / 2]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[TILE_SIZE, TILE_SIZE]} />
             <meshStandardMaterial map={floorTexture} />
-          </mesh>,
+          </mesh>
         )
         key++
 
         // Ceiling
         elements.push(
-          <mesh
-            key={`ceil-${x}-${y}`}
-            position={[x + 0.5, WALL_HEIGHT, y + 0.5]}
-            rotation={[Math.PI / 2, 0, 0]}
-          >
-            <planeGeometry args={[1, 1]} />
+          <mesh key={`ceil-${x}-${y}`} position={[x * TILE_SIZE + TILE_SIZE / 2, WALL_HEIGHT, y * TILE_SIZE + TILE_SIZE / 2]} rotation={[Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[TILE_SIZE, TILE_SIZE]} />
             <meshStandardMaterial map={ceilingTexture} />
-          </mesh>,
+          </mesh>
         )
         key++
 
-        // Wall segments on the 4 edges
-        // North edge (y-1)
-        if (y > 0) {
-          const neighbor = dungeonMap[y - 1][x]
-          if (isOpaque(neighbor) !== isOpaque(tile)) {
+        // Helper to render wall segment
+        const renderWall = (nx: number, ny: number, pos: [number, number, number], args: [number, number, number]) => {
+          const neighbor = getTileSafe(nx, ny)
+          if (localIsOpaque(neighbor, nx, ny)) {
+            const tex = isDoor(neighbor) ? doorTexture : wallTexture
             elements.push(
-              <mesh
-                key={`wall-n-${x}-${y}`}
-                position={[x + 0.5, WALL_HEIGHT / 2, y]}
-              >
-                <boxGeometry args={[1, WALL_HEIGHT, WALL_THICKNESS]} />
-                <meshStandardMaterial map={wallTexture} />
-              </mesh>,
-            )
-            key++
-          }
-        }
-        // South edge (y+1)
-        if (y < height - 1) {
-          const neighbor = dungeonMap[y + 1][x]
-          if (isOpaque(neighbor) !== isOpaque(tile)) {
-            elements.push(
-              <mesh
-                key={`wall-s-${x}-${y}`}
-                position={[x + 0.5, WALL_HEIGHT / 2, y + 1]}
-              >
-                <boxGeometry args={[1, WALL_HEIGHT, WALL_THICKNESS]} />
-                <meshStandardMaterial map={wallTexture} />
-              </mesh>,
-            )
-            key++
-          }
-        }
-        // West edge (x-1)
-        if (x > 0) {
-          const neighbor = dungeonMap[y][x - 1]
-          if (isOpaque(neighbor) !== isOpaque(tile)) {
-            elements.push(
-              <mesh
-                key={`wall-w-${x}-${y}`}
-                position={[x, WALL_HEIGHT / 2, y + 0.5]}
-              >
-                <boxGeometry args={[WALL_THICKNESS, WALL_HEIGHT, 1]} />
-                <meshStandardMaterial map={wallTexture} />
-              </mesh>,
-            )
-            key++
-          }
-        }
-        // East edge (x+1)
-        if (x < width - 1) {
-          const neighbor = dungeonMap[y][x + 1]
-          if (isOpaque(neighbor) !== isOpaque(tile)) {
-            elements.push(
-              <mesh
-                key={`wall-e-${x}-${y}`}
-                position={[x + 1, WALL_HEIGHT / 2, y + 0.5]}
-              >
-                <boxGeometry args={[WALL_THICKNESS, WALL_HEIGHT, 1]} />
-                <meshStandardMaterial map={wallTexture} />
-              </mesh>,
+              <mesh key={`wall-${x}-${y}-${nx}-${ny}`} position={pos}>
+                <boxGeometry args={args} />
+                <meshStandardMaterial map={tex} />
+              </mesh>
             )
             key++
           }
         }
 
-        // Door rendering
-        if (isDoor(tile)) {
-          const doorKey = `${x},${y}`
-          if (!doorStates[doorKey]) {
-            elements.push(
-              <mesh
-                key={`door-${x}-${y}`}
-                position={[x + 0.5, WALL_HEIGHT / 2, y + 0.5]}
-              >
-                <boxGeometry args={[0.9, WALL_HEIGHT, 0.1]} />
-                <meshStandardMaterial map={doorTexture} />
-              </mesh>,
-            )
-            key++
-          }
-        }
+        // North edge (y-1)
+        renderWall(x, y - 1, [x * TILE_SIZE + TILE_SIZE / 2, WALL_HEIGHT / 2, y * TILE_SIZE], [TILE_SIZE, WALL_HEIGHT, WALL_THICKNESS])
+        // South edge (y+1)
+        renderWall(x, y + 1, [x * TILE_SIZE + TILE_SIZE / 2, WALL_HEIGHT / 2, y * TILE_SIZE + TILE_SIZE], [TILE_SIZE, WALL_HEIGHT, WALL_THICKNESS])
+        // West edge (x-1)
+        renderWall(x - 1, y, [x * TILE_SIZE, WALL_HEIGHT / 2, y * TILE_SIZE + TILE_SIZE / 2], [WALL_THICKNESS, WALL_HEIGHT, TILE_SIZE])
+        // East edge (x+1)
+        renderWall(x + 1, y, [x * TILE_SIZE + TILE_SIZE, WALL_HEIGHT / 2, y * TILE_SIZE + TILE_SIZE / 2], [WALL_THICKNESS, WALL_HEIGHT, TILE_SIZE])
       }
     }
 
@@ -209,7 +161,7 @@ export function DungeonView() {
         .map((enemy) => (
           <EnemyBillboard
             key={enemy.id}
-            position={[enemy.tileX + 0.5, 1.2, enemy.tileY + 0.5]}
+            position={[enemy.tileX * TILE_SIZE + TILE_SIZE / 2, 1.2, enemy.tileY * TILE_SIZE + TILE_SIZE / 2]}
             color={ENEMY_COLORS[enemy.name] ?? '#c44'}
             label={enemy.name}
           />

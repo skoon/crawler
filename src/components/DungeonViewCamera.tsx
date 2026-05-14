@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Vector3, MathUtils } from 'three'
 import { useGameStore } from '../store'
+import { TILE_SIZE } from '../types'
 
 // In Three.js, positive Y rotation turns left (counter-clockwise).
 // North (-Z) is 0, East (+X) is clockwise (-PI/2), South (+Z) is PI, West (-X) is counter-clockwise (+PI/2).
@@ -30,7 +31,7 @@ export function DungeonViewCamera() {
   const targetAngleY = useRef(0)
   const lightRef = useRef<any>(null)
 
-  targetPos.current.set(playerPosition.x + 0.5, 1.6, playerPosition.y + 0.5)
+  targetPos.current.set(playerPosition.x * TILE_SIZE + TILE_SIZE / 2, 1.6, playerPosition.y * TILE_SIZE + TILE_SIZE / 2)
   targetAngleY.current = FACING_ANGLES[playerFacing] ?? 0
 
   useFrame(() => {
@@ -50,9 +51,9 @@ export function DungeonViewCamera() {
   return (
     <pointLight 
       ref={lightRef} 
-      distance={8} 
+      distance={12} 
       decay={2} 
-      intensity={2.5} 
+      intensity={3.0} 
       color="#ffddaa" 
     />
   )

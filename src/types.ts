@@ -139,3 +139,5 @@ export const TILE_STAIRS_UP = 4;
 export const TILE_STAIRS_DOWN = 5;
 export const TILE_DOOR_CLOSED = 6;
 export const TILE_SECRET_DOOR = 7;
+
+export const TILE_SIZE = 2.25;

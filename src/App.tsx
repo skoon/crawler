@@ -46,7 +46,7 @@ function Game({ onQuit }: GameProps) {
       <main className="pane pane-center">
         <div>
           <Canvas>
-            <ambientLight intensity={0.05} />
+            <ambientLight intensity={0.8} />
             <DungeonView />
             <DungeonViewCamera />
           </Canvas>
