@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { Vector3, MathUtils } from 'three'
+import { Vector3 } from 'three'
 import { useGameStore } from '../store'
 import { TILE_SIZE } from '../types'
 

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useGameStore } from '../store'
 import { isOpaque, isDoor } from '../map/mapUtils'
-import { TILE_SIZE, TILE_WALL, TILE_SECRET_DOOR } from '../types'
+import { TILE_SIZE, TILE_WALL, TILE_SECRET_DOOR, TILE_STAIRS_UP, TILE_STAIRS_DOWN } from '../types'
 import type { MapItem } from '../types'
 import { useFrame } from '@react-three/fiber'
 import { Mesh } from 'three'
@@ -169,6 +169,26 @@ export function DungeonView() {
             )
             key++
           }
+        }
+
+        // Stairs markers
+        if (tile === TILE_STAIRS_UP) {
+          elements.push(
+            <mesh key={`stairs-up-${x}-${y}`} position={[x * TILE_SIZE + TILE_SIZE / 2, 0.05, y * TILE_SIZE + TILE_SIZE / 2]}>
+              <planeGeometry args={[TILE_SIZE * 0.6, TILE_SIZE * 0.6]} />
+              <meshBasicMaterial color="#4a4" transparent opacity={0.7} />
+            </mesh>
+          )
+          key++
+        }
+        if (tile === TILE_STAIRS_DOWN) {
+          elements.push(
+            <mesh key={`stairs-dn-${x}-${y}`} position={[x * TILE_SIZE + TILE_SIZE / 2, 0.05, y * TILE_SIZE + TILE_SIZE / 2]}>
+              <planeGeometry args={[TILE_SIZE * 0.6, TILE_SIZE * 0.6]} />
+              <meshBasicMaterial color="#a44" transparent opacity={0.7} />
+            </mesh>
+          )
+          key++
         }
       }
     }

@@ -1,4 +1,3 @@
-import React from 'react'
 import type { LevelData } from '../../types'
 
 interface Props {

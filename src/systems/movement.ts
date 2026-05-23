@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useGameStore } from '../store'
-import { isSolid, isDoor, getTile } from '../map/mapUtils'
-import { TILE_SECRET_DOOR } from '../types'
+import { isSolid, isDoor, isStairs, getTile } from '../map/mapUtils'
+import { TILE_STAIRS_UP, TILE_SECRET_DOOR } from '../types'
 import { useKeyboard } from '../hooks/useKeyboard'
 import { saveGame, loadGame } from './saveLoad'
 
@@ -102,6 +102,26 @@ export function useMovementSystem(isPaused: boolean = false) {
         if (!isSolid(tile) || isRevealedSecret) {
           useGameStore.getState().setPlayerPosition({ x: targetX, y: targetY })
           lastMove.current = now
+
+          // Stairs transition
+          if (isStairs(tile)) {
+            const fresh = useGameStore.getState()
+            const currentLevel = fresh.levels[fresh.currentLevelId]
+            const transition = currentLevel?.transitions?.find(
+              (t) => t.tileX === targetX && t.tileY === targetY
+            )
+            if (transition) {
+              const dir = tile === TILE_STAIRS_UP ? 'ascend' : 'descend'
+              fresh.addLogMessage(`You ${dir} the stairs...`)
+              setTimeout(() => {
+                useGameStore.getState().changeLevel(
+                  transition.targetLevelId,
+                  transition.targetPosition,
+                  transition.targetFacing,
+                )
+              }, 300)
+            }
+          }
         }
       }
     }

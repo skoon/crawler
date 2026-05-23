@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { LevelData, EncounterTrigger, MapItem, Enemy, Item } from '../../types'
+import type { LevelData, Enemy, Item } from '../../types'
 import { EditorCanvas } from './EditorCanvas'
 import { EditorTools } from './EditorTools'
 

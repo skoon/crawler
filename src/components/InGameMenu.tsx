@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { saveGame } from '../systems/saveLoad'
-import { useGameStore } from '../store'
 
 interface Props {
   onClose: () => void

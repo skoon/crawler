@@ -1107,6 +1107,454 @@ Create a main menu and polish the UI with an old-school theme.
 
 ---
 
+## Phase 4: Atmosphere & Polish
+
+### M21 — Lighting, Torches & Resting
+- Light source system: torches with limited duration (countdown timer displayed in HUD)
+- Rest command: party sits to recover HP (scaled by time rested); risk of random encounter interruption
+- Light radius controls fog-of-war range (shrinks as torch burns low)
+- Campfire/save points on the map: safe zones to rest without interruption
+- Torchpickup items that refill light duration
+- Dimming visual effect as torch gets low (tint dungeon rendering darker)
+
+#### M21 Prompts
+
+##### Prompt 1 — Light source state, torch timer HUD, and rest mechanics
+
+```
+Build the torch/light management system and rest mechanic.
+
+1. Edit `src/types.ts`:
+   - Add to `GameState`:
+     ```typescript
+     torchDuration: number;       // seconds remaining (default 300 = 5 min)
+     maxTorchDuration: number;    // default 300
+     isResting: boolean;
+     restTimer: number;           // seconds spent resting
+     ```
+   - Add actions:
+     ```typescript
+     tickTorch: (deltaSeconds: number) => void;
+     refillTorch: (seconds: number) => void;
+     startRest: () => void;
+     stopRest: () => void;
+     tickRest: (deltaSeconds: number) => void;
+     ```
+
+2. Edit `src/store.ts`:
+   - Initialize `torchDuration: 300`, `maxTorchDuration: 300`, `isResting: false`, `restTimer: 0`
+   - Implement all new actions
+   - `tickTorch`: reduce torchDuration by delta, clamp to 0; if 0 and not resting, add log "Your torch has gone out!"
+   - `tickRest`: increment restTimer, heal party members by 1 HP per 2 seconds rested
+   - `startRest`: set isResting true, log "You settle down to rest..."
+   - `stopRest`: set isResting false, reset restTimer
+
+3. Create `src/hooks/useTorchTimer.ts`:
+   - Export `useTorchTimer()` hook
+   - Uses `useFrame` from R3F to get delta time
+   - Calls `tickTorch(delta)` on every frame
+   - When `isResting`, also calls `tickRest(delta)`
+   - Has a configurable interval (e.g., 1% chance per tick) to trigger a random encounter during rest
+
+4. Create `src/components/TorchHUD.tsx`:
+   - Import `useGameStore` from `../store`
+   - Read `torchDuration`, `maxTorchDuration`, `isResting`, `restTimer` from store
+   - Render at bottom-left or top-center of the center pane (overlaid):
+     - Torch icon (text "Torch:" with a progress bar showing remaining duration)
+     - Color shifts: green (>60%), yellow (30-60%), red (<30%)
+     - When torch is out: show "DARKNESS" in red, pulsing
+     - When resting: show rest progress "Resting... [X seconds]"
+   - Container styled absolutely positioned over the 3D view
+
+5. Update `src/App.tsx`:
+   - Import `useTorchTimer` and `TorchHUD`
+   - Call `useTorchTimer()`
+   - Place `<TorchHUD />` inside the center pane
+
+6. Update movement system (`src/systems/movement.ts`):
+   - Add 'R' key to start/stop resting
+   - When `isResting`, prevent movement
+
+7. Add keyboard hint in `src/systems/movement.ts` docs or a small on-screen hint.
+
+8. Verify with `npm run build`.
+```
+
+##### Prompt 2 — Torch-based fog of war radius and lighting effects
+
+```
+Tie the torch duration to the fog of war radius and add visual dimming.
+
+1. Edit `src/systems/fogOfWar.ts`:
+   - Import `useGameStore` from `../store`
+   - Read `torchDuration` from the store
+   - Calculate visibility radius based on torch duration:
+     - torch > 60%: radius = 5
+     - torch 30-60%: radius = 4
+     - torch < 30%: radius = 3
+     - torch = 0: radius = 1 (can barely see)
+   - Pass this dynamic radius to `exploreRadius`
+
+2. Edit `src/components/DungeonView.tsx`:
+   - Read `torchDuration`, `maxTorchDuration` from the store
+   - Calculate light ratio = torchDuration / maxTorchDuration
+   - Pass a global tint color to floor/ceiling/wall materials:
+     - light ratio > 0.5: normal colors (multiply by white)
+     - light ratio 0.25-0.5: dimmer (multiply by dark gray)
+     - light ratio < 0.25: very dim (multiply by very dark gray)
+     - torch = 0: near-black (multiply by 0.15)
+   - Use `<meshStandardMaterial>` with a computed `color` prop
+
+3. Verify with `npm run build`.
+```
+
+---
+
+### M22 — Ranged Combat & Targeting
+- Ranged weapon types: bows, crossbows, thrown weapons (daggers, darts, axes)
+- Targeting system: press T or click to enter targeting mode; highlight tile/enemy in 3D view
+- Range calculation: maximum distance in tiles for each weapon type
+- Line-of-sight check: ranged attacks cannot pass through opaque tiles
+- Ranged attack resolution: to-hit uses DEX modifier instead of STR
+- Ammo tracking: arrows, bolts, throwing knives with limited quantity
+
+#### M22 Prompts
+
+##### Prompt 1 — Ranged weapon data model, ammo tracking, and targeting mode
+
+```
+Add ranged weapons, ammo tracking, and a targeting state to the game.
+
+1. Edit `src/types.ts`:
+   - Add to `ItemType`: `'ammo'`
+   - Add new fields to `Item.effects`:
+     ```typescript
+     range: number;         // max tiles the weapon can reach
+     ammoType: string;      // e.g. "arrow", "bolt", "thrown"
+     ```
+   - Add to `GameState`:
+     ```typescript
+     targetingMode: boolean;
+     targetPosition: TilePosition | null;
+     ammo: Record<string, number>;  // e.g. { arrow: 20, bolt: 15 }
+     ```
+   - Add actions:
+     ```typescript
+     setTargetingMode: (active: boolean) => void;
+     setTargetPosition: (pos: TilePosition | null) => void;
+     addAmmo: (type: string, count: number) => void;
+     consumeAmmo: (type: string) => boolean;
+     ```
+
+2. Edit `src/store.ts`:
+   - Add initial state for all new fields
+   - Implement actions
+
+3. Create `src/components/TargetingReticle.tsx`:
+   - Renders in the Three.js scene when `targetingMode` is true
+   - Shows a grid highlight on the targeted tile:
+     - `<mesh>` with `<planeGeometry>` at the tile center, semi-transparent green
+     - Range circle: render a ring of small spheres at max range boundary
+   - Moves highlight based on keyboard arrows/WASD (while targeting)
+   - Confirm with Enter/Space to shoot, Escape to cancel
+
+4. Create `src/systems/rangedCombat.ts`:
+   - Export `resolveRangedAttack(attacker: PartyMember, targetTile: TilePosition, enemies: Enemy[]): { hit: boolean; damage: number; targetEnemy: Enemy | null }`
+   - Find which enemy occupies the target tile
+   - Check line-of-sight from player position to target tile (reuse fogOfWar's LOS check)
+   - Calculate to-hit using DEX modifier instead of STR
+   - Consume ammo from the store
+
+5. Verify with `npm run build`.
+```
+
+##### Prompt 2 — Ranged UI, ammo display, and inventory integration
+
+```
+Build UI for ranged combat mode and integrate with inventory.
+
+1. Update `src/components/CombatOverlay.tsx`:
+   - Add a [Ranged] action button when the selected member has a ranged weapon equipped
+   - Clicking [Ranged] calls `setTargetingMode(true)`
+   - The overlay shows current ammo count when a ranged weapon is selected
+
+2. Update `src/components/InventoryPane.tsx`:
+   - Show ammo counts in the inventory display
+   - Add quiver/ammo pouch slot to equipped slots display
+
+3. Update movement system (`src/systems/movement.ts`):
+   - When `targetingMode` is true: arrow keys move target reticle instead of player
+   - Enter/Space fires, Escape cancels
+   - Player cannot move while targeting
+
+4. Add ranged weapons to `src/map/sampleDungeon.ts` / `catacombs_1.json`:
+   - A Short Bow on one of the map tiles
+   - A quiver of arrows somewhere
+
+5. Verify with `npm run build`.
+```
+
+---
+
+### M23 — Sound, Music & Atmosphere
+- Ambient dungeon sound effects (dripping water, wind, distant growls)
+- Footstep sounds on player movement
+- Weapon swing, hit, and miss sounds for combat
+- Spell casting sound effects
+- Background music tracks: menu theme, dungeon exploration, combat
+- Positional audio via Three.js: sounds emit from specific tiles (e.g., dripping from a specific spot)
+
+#### M23 Prompts
+
+##### Prompt 1 — Sound manager and ambient audio system
+
+```
+Set up the audio system with ambient dungeon sounds and background music.
+
+1. Create `src/systems/audio.ts`:
+   - Use Three.js `AudioListener`, `Audio`, `PositionalAudio` via the R3F `useThree` hook
+   - Export `useAudioManager()` hook:
+     - On mount: create an `AudioListener` and attach to the camera
+     - Export functions:
+       - `playSound(name: string, volume?: number, loop?: boolean): void`
+       - `playPositionalSound(name: string, position: [number, number, number], volume?: number): void`
+       - `playMusic(track: string): void`
+       - `stopMusic(): void`
+       - `setMasterVolume(vol: number): void`
+   - Since we don't have actual audio files yet, use the Web Audio API to generate simple procedural sounds:
+     - Footstep: short noise burst (~100ms)
+     - Hit: short metallic ping
+     - Ambient: low-frequency oscillator for wind
+
+2. Create `src/systems/ambientAudio.ts`:
+   - Export `useAmbientAudio()` hook
+   - Uses `useAudioManager()` to play ambient sounds on a timer
+   - Random drip sounds every 3-8 seconds
+   - Low wind sound looping in background
+   - Only plays when not in combat
+
+3. Create `src/systems/musicManager.ts`:
+   - Export `useMusicManager()` hook
+   - Plays different music based on game state:
+     - Main menu: menu theme
+     - Exploring: dungeon exploration theme
+     - Combat: combat theme (switch immediately, fade back to exploration after combat ends)
+   - Cross-fade between tracks using gain nodes
+
+4. Play footstep sounds — update `src/systems/movement.ts`:
+   - Call `playSound('footstep')` whenever the player successfully moves to a new tile
+
+5. Update `src/App.tsx`:
+   - Import and call `useAmbientAudio()` and `useMusicManager()`
+
+6. Verify with `npm run build` (no runtime errors, sounds will be basic procedural).
+```
+
+##### Prompt 2 — Combat sounds and positional audio integration
+
+```
+Add combat sound effects and positional audio for 3D sound placement.
+
+1. Update `src/components/CombatOverlay.tsx` and `src/systems/combatResolution.ts`:
+   - On attack: play swing sound
+   - On hit: play hit impact sound
+   - On miss: play whoosh sound
+   - On enemy attack: play appropriate sounds
+   - On kill: play death sound
+   - On heal: play positive magic sound
+
+2. Update `src/components/DungeonView.tsx`:
+   - For ambient placement: positional audio sources at specific map features
+   - E.g., a dripping sound at the pit tile (x=8, y=5)
+   - E.g., a growl sound at encounter trigger locations
+
+3. Update `src/components/EnemyBillboard.tsx`:
+   - Play an idle sound periodically for each enemy (growl, clatter) using positional audio
+
+4. Verify with `npm run build`.
+```
+
+---
+
+### M24 — Character Creation & Party Management
+- New Game flow with character creation screen before entering the dungeon
+- Roll stats using 3d6 or 4d6-drop-lowest method
+- Choose class for each character (Fighter, Mage, Cleric, Thief, Paladin, Ranger)
+- Name characters and arrange party order (drag to reorder)
+- Pre-made party templates for quick start (e.g. "Balanced", "All Fighters", "All Magic")
+
+#### M24 Prompts
+
+##### Prompt 1 — Character creation screen with stat rolling and class selection
+
+```
+Build the character creation screen for the New Game flow.
+
+1. Create `src/components/CharacterCreation.tsx`:
+   - State: array of 4 characters being created
+   - Each character has: name, class, stats (str/dex/con/int/wis/cha), rolled using 3d6
+   - UI layout:
+     - Left side: list of 4 character slots (click to edit)
+     - Right side: current character editor
+       - Name input field
+       - Class selector dropdown (Fighter, Mage, Cleric, Thief, Paladin, Ranger) — each with a short description
+       - Stat display with [Reroll] button — shows 6 stats with values
+         - Clicking [Reroll] re-rolls all 6 stats using 3d6
+         - Show the roll breakdown (e.g., "4+2+5 = 11")
+       - Total HP auto-calculated based on class and CON modifier
+       - AC auto-calculated based on class and DEX modifier
+   - Navigation: [Back] and [Next] buttons at the bottom
+   - On complete: returns the final PartyMember array
+
+2. Create `src/data/classDefinitions.ts`:
+   ```typescript
+   export interface ClassDef {
+     name: string;
+     description: string;
+     hitDice: string;      // e.g. "1d10" for Fighter
+     baseAC: number;
+     allowedWeapons: string[];
+     allowedArmor: string[];
+     primeStat: string;     // e.g. "str" for Fighter
+   }
+
+   export const classDefs: Record<string, ClassDef> = { ... };
+   ```
+
+3. Update `src/components/MainMenu.tsx`:
+   - Replace the direct `handleNewGame` which loads catacombs_1.json with a flow that goes to character creation first
+   - "New Game" now navigates to character creation instead of directly starting
+
+4. Update `src/App.tsx`:
+   - Add a `'creation'` route between `'menu'` and `'game'`
+   - Character creation -> on finish, load the starting level and set characters in store, then switch to game
+
+5. Verify with `npm run build`.
+```
+
+##### Prompt 2 — Party ordering and pre-made templates
+
+```
+Add drag-to-reorder for party members and pre-made party templates.
+
+1. Update `src/components/CharacterCreation.tsx`:
+   - Add drag-and-drop reordering of the 4 character slots
+   - Use simple HTML5 drag and drop (no extra library needed):
+     - `draggable` attribute on each slot
+     - `onDragStart`, `onDragOver`, `onDrop` handlers to reorder the array
+
+2. Add pre-made party templates:
+   - "Balanced": Fighter, Mage, Cleric, Thief (default stats)
+   - "Brawlers": Fighter, Fighter, Cleric, Thief
+   - "Arcane": Mage, Mage, Cleric, Thief
+   - "Skirmish": Fighter, Thief, Thief, Cleric
+   - Each template pre-fills names and classes with rolled stats
+
+3. Add a "Quick Start" button on the main menu that skips character creation and uses the "Balanced" template
+
+4. Verify with `npm run build`.
+```
+
+---
+
+### M25 — Death, Progression & Game Over
+- Character death system: 0 HP = unconscious; failed death saves = dead
+- Full party wipe (TPK) → Game Over screen with "Load Save" / "New Game" / "Quit"
+- Level-up system: XP thresholds, stat gains (roll hit dice), new spell tiers
+- Resurrection: shrine tiles on map, priest NPC for resurrection services
+- Training: must visit a trainer (map tile) to level up
+
+#### M25 Prompts
+
+##### Prompt 1 — Death saves, unconscious state, and game over screen
+
+```
+Implement character death mechanics and the game over flow.
+
+1. Edit `src/types.ts`:
+   - Add to `GameState`:
+     ```typescript
+     gameOver: boolean;
+     deathSaveTimers: Record<string, number>;  // memberId -> rounds remaining
+     ```
+
+2. Edit `src/store.ts`:
+   - Initialize `gameOver: false`, `deathSaveTimers: {}`
+   - Update `damageMember`:
+     - When HP reaches 0, add 'Unconscious' status
+     - Set a death save timer of 3 rounds for that member
+   - Add action `processDeathSaves()`:
+     - Decrement death save timers
+     - When timer reaches 0, member is permanently dead (status: 'Dead')
+     - If all members are Dead or Unconscious, set gameOver to true
+
+3. Create `src/components/GameOverScreen.tsx`:
+   - Full-screen overlay with dark background
+   - "TOTAL PARTY KILL" or "GAME OVER" in large red text
+   - Subtitle explaining the demise
+   - Buttons: [Load Save] [New Game] [Quit to Menu]
+   - Styled in the same stone/parchment theme
+
+4. Update `src/systems/combatResolution.ts` or `src/components/CombatOverlay.tsx`:
+   - After every combat round, call `processDeathSaves()`
+   - If gameOver, show GameOverScreen
+
+5. Update `src/App.tsx`:
+   - Read `gameOver` from store
+   - If true, render `<GameOverScreen />` on top of everything
+
+6. Verify with `npm run build`.
+```
+
+##### Prompt 2 — Level-up system, training, and resurrection
+
+```
+Add character progression with leveling and resurrection mechanics.
+
+1. Edit `src/types.ts`:
+   - Add to `GameState`:
+     ```typescript
+     xpRewards: number[];  // shared XP pool
+     ```
+   - Add actions:
+     ```typescript
+     addXp: (amount: number) => void;
+     levelUp: (memberIndex: number) => void;
+     resurrect: (memberIndex: number) => void;
+     ```
+   - Add to `PartyMember`:
+     ```typescript
+     xpToNextLevel: number;
+     ```
+
+2. Create `src/data/levelProgression.ts`:
+   - Export `getXpThreshold(level: number): number` — XP needed for next level
+   - Export `rollHitPoints(class: string): number` — roll hit dice for the class
+   - Export `getStatModifier(stat: number): number` — standard D&D stat modifier
+
+3. Edit `src/store.ts`:
+   - Implement `addXp`: distribute XP to all party members, check if anyone levels up
+   - Implement `levelUp`: increase level, roll HP, update xpToNextLevel
+   - Implement `resurrect`: change status from 'Dead' to 'Unconscious' with 1 HP
+
+4. Create `src/components/LevelUpModal.tsx`:
+   - Appears when a character levels up after combat
+   - Shows: name, new level, HP gained, any new spell tiers
+   - Dismiss button to continue playing
+
+5. Add training/resurrection map tiles — update `src/map/sampleDungeon.ts`:
+   - Add a "shrine" tile (re-use `TILE_FLOOR` but mark with a special property)
+   - Add a "trainer" encounter (NPC on map that allows level-up interaction)
+
+6. Update interaction system (`src/systems/movement.ts`):
+   - When pressing Space/Enter adjacent to a shrine tile, attempt resurrection
+   - When pressing Space/Enter adjacent to a trainer, allow level-up
+
+7. Verify with `npm run build`.
+```
+
+---
+
 ## Getting Started
 
 ```bash

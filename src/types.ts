@@ -24,6 +24,14 @@ export interface TilePosition {
   y: number;
 }
 
+export interface LevelTransition {
+  tileX: number;
+  tileY: number;
+  targetLevelId: string;
+  targetPosition: TilePosition;
+  targetFacing: number;
+}
+
 export interface LevelData {
   id: string;
   name: string;
@@ -33,9 +41,18 @@ export interface LevelData {
   startPosition: TilePosition;
   startFacing: number;
   encounters: EncounterTrigger[];
-  items: Omit<MapItem, 'id'>[]; // Use Omit if mapItems don't have ids, but actually MapItem is { item: Item, tileX, tileY }. Let's just use MapItem.
+  items: MapItem[];
+  transitions?: LevelTransition[];
   floorTexture?: string;
   wallTexture?: string;
+}
+
+export interface LevelScopedState {
+  exploredTiles: Record<string, boolean>;
+  doorStates: Record<string, boolean>;
+  secretDoorsRevealed: Record<string, boolean>;
+  encounterTriggers: EncounterTrigger[];
+  mapItems: MapItem[];
 }
 
 export interface Enemy {
@@ -128,6 +145,11 @@ export interface GameState {
   equipItem: (memberIndex: number, slot: EquipSlot, item: Item) => void;
   unequipItem: (memberIndex: number, slot: EquipSlot) => void;
   useItem: (itemId: string, memberIndex: number) => void;
+
+  currentLevelId: string;
+  levels: Record<string, LevelData>;
+  perLevelStates: Record<string, LevelScopedState>;
+  changeLevel: (levelId: string, entry: TilePosition, facing: number) => void;
   loadLevel: (level: LevelData) => void;
 }
 

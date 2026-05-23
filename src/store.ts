@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import type { GameState, PartyMember, EquipSlot } from './types'
-import { sampleDungeon, sampleEncounters, sampleMapItems } from './map/sampleDungeon'
+import type { GameState, PartyMember, LevelData, LevelScopedState } from './types'
+import { level1, level2 } from './map/sampleDungeon'
 import { isOpaque } from './map/mapUtils'
 
 const party: PartyMember[] = [
@@ -10,23 +10,39 @@ const party: PartyMember[] = [
   { id: '4', name: 'Shadow', class: 'Thief', level: 1, hp: 8, maxHp: 8, ac: 14, str: 10, dex: 16, con: 10, int: 13, wis: 10, cha: 9, xp: 0, status: [], equipment: {} },
 ]
 
+function buildLevelRegistry(): Record<string, LevelData> {
+  const reg: Record<string, LevelData> = {}
+  for (const lvl of [level1, level2]) {
+    reg[lvl.id] = lvl
+  }
+  return reg
+}
+
+const levels = buildLevelRegistry()
+const initialLevel = level1
+
 export const useGameStore = create<GameState>((set, get) => ({
   party,
   selectedMemberIndex: 0,
-  playerPosition: sampleDungeon.startPosition,
-  playerFacing: sampleDungeon.startFacing,
-  dungeonMap: sampleDungeon.tiles,
+  playerPosition: initialLevel.startPosition,
+  playerFacing: initialLevel.startFacing,
+  dungeonMap: initialLevel.tiles,
+  floorTexture: initialLevel.floorTexture,
+  wallTexture: initialLevel.wallTexture,
   log: ['Welcome to the dungeon.'],
   combatState: 'idle' as const,
   enemies: [],
-  encounterTriggers: sampleEncounters,
+  encounterTriggers: initialLevel.encounters,
   currentTargetEnemyId: null,
   defendingMemberIds: [],
   doorStates: {},
   secretDoorsRevealed: {},
   exploredTiles: {},
-  mapItems: sampleMapItems,
+  mapItems: initialLevel.items,
   inventory: [],
+  currentLevelId: initialLevel.id,
+  levels,
+  perLevelStates: {},
 
   selectMember: (index) => set({ selectedMemberIndex: index }),
   addLogMessage: (message) => set((state) => ({ log: [...state.log, message] })),
@@ -195,20 +211,53 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   }),
 
-  loadLevel: (level) => set({
-    dungeonMap: level.tiles,
-    playerPosition: level.startPosition,
-    playerFacing: level.startFacing,
-    encounterTriggers: level.encounters,
-    mapItems: level.items,
-    floorTexture: level.floorTexture,
-    wallTexture: level.wallTexture,
-    combatState: 'idle',
-    enemies: [],
-    doorStates: {},
-    secretDoorsRevealed: {},
-    exploredTiles: {},
-    currentTargetEnemyId: null,
-    defendingMemberIds: [],
-  }),
+  changeLevel: (levelId, entry, facing) => {
+    const state = get()
+
+    // Save current level's scoped state
+    const scoped: LevelScopedState = {
+      exploredTiles: state.exploredTiles,
+      doorStates: state.doorStates,
+      secretDoorsRevealed: state.secretDoorsRevealed,
+      encounterTriggers: state.encounterTriggers,
+      mapItems: state.mapItems,
+    }
+    const perLevelStates = { ...state.perLevelStates, [state.currentLevelId]: scoped }
+
+    // Look up target level
+    const target = state.levels[levelId]
+    if (!target) {
+      state.addLogMessage(`Level "${levelId}" not found.`)
+      return
+    }
+
+    // Restore target level's scoped state
+    const saved = perLevelStates[levelId]
+    set({
+      currentLevelId: levelId,
+      dungeonMap: target.tiles,
+      floorTexture: target.floorTexture,
+      wallTexture: target.wallTexture,
+      playerPosition: entry,
+      playerFacing: facing,
+      encounterTriggers: saved?.encounterTriggers ?? target.encounters,
+      mapItems: saved?.mapItems ?? target.items,
+      exploredTiles: saved?.exploredTiles ?? {},
+      doorStates: saved?.doorStates ?? {},
+      secretDoorsRevealed: saved?.secretDoorsRevealed ?? {},
+      combatState: 'idle',
+      enemies: [],
+      currentTargetEnemyId: null,
+      defendingMemberIds: [],
+      perLevelStates,
+      log: [...state.log, `You descend into ${target.name}.`],
+    })
+  },
+
+  loadLevel: (level) => {
+    const state = get()
+    const levels = { ...state.levels, [level.id]: level }
+    set({ levels })
+    state.changeLevel(level.id, level.startPosition, level.startFacing)
+  },
 }))

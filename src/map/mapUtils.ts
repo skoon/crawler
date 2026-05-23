@@ -35,6 +35,10 @@ export function isDoor(tile: number): boolean {
   return tile === TILE_DOOR || tile === TILE_DOOR_CLOSED
 }
 
+export function isStairs(tile: number): boolean {
+  return tile === TILE_STAIRS_UP || tile === TILE_STAIRS_DOWN
+}
+
 export function getTile(map: number[][], x: number, y: number): number {
   if (y < 0 || y >= map.length || x < 0 || x >= map[0].length) {
     return TILE_WALL

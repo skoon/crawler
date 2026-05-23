@@ -1,5 +1,8 @@
 # Project Milestone Status
 
+> **Next recommended milestone: M13 — Multi-Level Architecture**
+> Stairs tiles (`TILE_STAIRS_UP` / `TILE_STAIRS_DOWN`) are already defined but non-functional. Adding level transitions unlocks meaningful dungeon depth.
+
 ## Phase 1: The Core Foundation
 - [x] **M1: Basic Grid Map & React Setup**
 - [x] **M2: Movement Logic & Input Handling**
@@ -18,3 +21,17 @@
 - [ ] **M13: Multi-Level Architecture**
 - [x] **M14: JSON Dungeon Format & Loader**
 - [ ] **M15: In-Browser Map Builder**
+
+## Phase 3: Gameplay & Advanced Systems
+- [ ] **M16: Advanced Combat & Magic System**
+- [ ] **M17: Interactive Puzzles & Traps**
+- [ ] **M18: The Automap**
+- [ ] **M19: NPCs, Dialogue, & Shops**
+- [ ] **M20: Dungeon Modules (ZIP Imports)**
+
+## Phase 4: Atmosphere & Polish
+- [ ] **M21: Lighting, Torches & Resting**
+- [ ] **M22: Ranged Combat & Targeting**
+- [ ] **M23: Sound, Music & Atmosphere**
+- [ ] **M24: Character Creation & Party Management**
+- [ ] **M25: Death, Progression & Game Over**
