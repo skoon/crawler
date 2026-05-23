@@ -86,7 +86,7 @@ export function DungeonView() {
         return !secretDoorsRevealed[`${tx},${ty}`]
       }
       if (isDoor(t)) {
-        return !doorStates[`${tx},${ty}`]
+        return false // Doors are essentially transparent hallway tiles containing a 3D door mesh
       }
       return isOpaque(t)
     }
@@ -148,6 +148,28 @@ export function DungeonView() {
         renderWall(x - 1, y, [x * TILE_SIZE, WALL_HEIGHT / 2, y * TILE_SIZE + TILE_SIZE / 2], [WALL_THICKNESS, WALL_HEIGHT, TILE_SIZE])
         // East edge (x+1)
         renderWall(x + 1, y, [x * TILE_SIZE + TILE_SIZE, WALL_HEIGHT / 2, y * TILE_SIZE + TILE_SIZE / 2], [WALL_THICKNESS, WALL_HEIGHT, TILE_SIZE])
+
+        // Door mesh rendering
+        if (isDoor(tile)) {
+          const doorKey = `${x},${y}`
+          if (!doorStates[doorKey]) {
+            const isWallE = getTileSafe(x + 1, y) === TILE_WALL || getTileSafe(x + 1, y) === TILE_SECRET_DOOR
+            const isWallW = getTileSafe(x - 1, y) === TILE_WALL || getTileSafe(x - 1, y) === TILE_SECRET_DOOR
+            const horizontal = isWallE || isWallW
+            
+            elements.push(
+              <mesh
+                key={`door-mesh-${x}-${y}`}
+                position={[x * TILE_SIZE + TILE_SIZE / 2, WALL_HEIGHT / 2, y * TILE_SIZE + TILE_SIZE / 2]}
+                rotation={[0, horizontal ? 0 : Math.PI / 2, 0]}
+              >
+                <boxGeometry args={[TILE_SIZE, WALL_HEIGHT, 0.2]} />
+                <meshStandardMaterial map={doorTexture} />
+              </mesh>
+            )
+            key++
+          }
+        }
       }
     }
 

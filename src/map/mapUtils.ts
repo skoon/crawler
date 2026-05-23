@@ -28,7 +28,7 @@ export function isOpaque(tile: number): boolean {
 }
 
 export function isSolid(tile: number): boolean {
-  return tile === TILE_WALL || tile === TILE_SECRET_DOOR
+  return tile === TILE_WALL || tile === TILE_SECRET_DOOR || tile === TILE_DOOR_CLOSED
 }
 
 export function isDoor(tile: number): boolean {
