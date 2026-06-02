@@ -1,7 +1,7 @@
 # Project Milestone Status
 
-> **Next recommended milestone: M13 — Multi-Level Architecture**
-> Stairs tiles (`TILE_STAIRS_UP` / `TILE_STAIRS_DOWN`) are already defined but non-functional. Adding level transitions unlocks meaningful dungeon depth.
+> **Current milestone: M16 — Advanced Combat & Magic System**
+> MP system, spell casting (Magic Missile, Fireball, Heal, Sleep, Haste, Shield), and status effects (poison, paralysis, burn, sleep, haste, shield) implemented.
 
 ## Phase 1: The Core Foundation
 - [x] **M1: Basic Grid Map & React Setup**
@@ -18,12 +18,12 @@
 - [x] **M12: Saving, Loading & UI Polish**
 
 ## Phase 2: Building Actual Dungeons
-- [ ] **M13: Multi-Level Architecture**
+- [x] **M13: Multi-Level Architecture**
 - [x] **M14: JSON Dungeon Format & Loader**
-- [ ] **M15: In-Browser Map Builder**
+- [x] **M15: In-Browser Map Builder**
 
 ## Phase 3: Gameplay & Advanced Systems
-- [ ] **M16: Advanced Combat & Magic System**
+- [x] **M16: Advanced Combat & Magic System** (MP, spells, status effects)
 - [ ] **M17: Interactive Puzzles & Traps**
 - [ ] **M18: The Automap**
 - [ ] **M19: NPCs, Dialogue, & Shops**

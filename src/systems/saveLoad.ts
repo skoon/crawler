@@ -47,6 +47,7 @@ export function loadGame(slot: number): boolean {
       mapItems: data.mapItems ?? [],
       inventory: data.inventory ?? [],
       encounterTriggers: data.encounterTriggers ?? [],
+      activeStatusEffects: [],
     })
     return true
   } catch {

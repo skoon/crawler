@@ -216,6 +216,17 @@
 .combat-item-cancel { color: #777; text-align: center; font-style: italic; background: transparent; border: none; }
 .combat-item-cancel:hover { background: transparent; border: none; color: #aaa; text-decoration: underline; }
 
+.combat-mp-bar {
+  text-align: center;
+  font-size: 12px;
+  color: #68f;
+  padding: 4px;
+  margin-top: 4px;
+  background: #111;
+  border: 1px solid #333;
+  letter-spacing: 1px;
+}
+
 .combat-status { text-align: center; font-size: 16px; color: #aaa; padding: 12px; font-style: italic; }
 .combat-victory { color: #8a733f; font-weight: bold; font-size: 24px; font-style: normal; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 2px 4px #000; }
 .combat-defeat { color: #8b0000; font-weight: bold; font-size: 24px; font-style: normal; text-transform: uppercase; letter-spacing: 2px; }

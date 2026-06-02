@@ -99,7 +99,8 @@ export function useMovementSystem(isPaused: boolean = false) {
         const targetY = state.playerPosition.y + dy
         const tile = getTile(state.dungeonMap, targetX, targetY)
         const isRevealedSecret = tile === TILE_SECRET_DOOR && state.secretDoorsRevealed[`${targetX},${targetY}`]
-        if (!isSolid(tile) || isRevealedSecret) {
+        const isDoorOpen = isDoor(tile) && state.doorStates[`${targetX},${targetY}`]
+        if (!isSolid(tile) || isDoorOpen || isRevealedSecret) {
           useGameStore.getState().setPlayerPosition({ x: targetX, y: targetY })
           lastMove.current = now
 

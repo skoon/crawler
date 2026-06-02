@@ -76,6 +76,7 @@ export const level2: LevelData = {
   items: [
     { item: { id: 'iron-shield', name: 'Iron Shield', type: 'shield', weight: 6, description: 'A sturdy iron shield', effects: { acBonus: 2 }, consumable: false }, tileX: 10, tileY: 1 },
     { item: { id: 'healing-potion-2', name: 'Healing Potion', type: 'potion', weight: 0.5, description: 'Restores 2d4 HP', effects: { hpBonus: 0 }, consumable: true }, tileX: 5, tileY: 10 },
+    { item: { id: 'mana-potion-1', name: 'Mana Potion', type: 'potion', weight: 0.5, description: 'Restores 10 MP', effects: { mpRestore: 10 }, consumable: true }, tileX: 3, tileY: 7 },
   ],
   transitions: [
     { tileX: 8, tileY: 2, targetLevelId: 'catacombs_1', targetPosition: { x: 8, y: 5 }, targetFacing: 0 },

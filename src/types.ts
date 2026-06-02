@@ -7,6 +7,8 @@ export interface PartyMember {
   level: number;
   hp: number;
   maxHp: number;
+  mp: number;
+  maxMp: number;
   ac: number;
   str: number;
   dex: number;
@@ -87,6 +89,7 @@ export interface Item {
   description: string;
   effects: Partial<{
     hpBonus: number;
+    mpRestore: number;
     acBonus: number;
     strBonus: number;
     dexBonus: number;
@@ -101,6 +104,32 @@ export interface MapItem {
   item: Item;
   tileX: number;
   tileY: number;
+}
+
+export interface Spell {
+  id: string;
+  name: string;
+  description: string;
+  mpCost: number;
+  targetType: 'enemy' | 'ally' | 'all_enemies' | 'self';
+  allowedClasses: string[];
+}
+
+export interface SpellResult {
+  damage?: number;
+  healing?: number;
+  statusEffectType?: string;
+  statusDuration?: number;
+  logMessage: string;
+}
+
+export interface StatusEffect {
+  id: string;
+  name: string;
+  targetId: string;
+  targetType: 'enemy' | 'party_member';
+  duration: number;
+  type: 'poison' | 'paralysis' | 'burn' | 'sleep' | 'haste' | 'shield';
 }
 
 export interface GameState {
@@ -145,6 +174,13 @@ export interface GameState {
   equipItem: (memberIndex: number, slot: EquipSlot, item: Item) => void;
   unequipItem: (memberIndex: number, slot: EquipSlot) => void;
   useItem: (itemId: string, memberIndex: number) => void;
+
+  activeStatusEffects: StatusEffect[];
+
+  spendMp: (memberIndex: number, amount: number) => void;
+  restoreMp: (memberIndex: number, amount: number) => void;
+  addStatusEffect: (effect: StatusEffect) => void;
+  removeStatusEffect: (effectId: string) => void;
 
   currentLevelId: string;
   levels: Record<string, LevelData>;

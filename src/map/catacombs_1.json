@@ -41,6 +41,10 @@
     {
       "item": { "id": "leather-armor", "name": "Leather Armor", "type": "armor", "weight": 10, "description": "Hardened leather protection", "effects": { "acBonus": 2 }, "consumable": false },
       "tileX": 4, "tileY": 9
+    },
+    {
+      "item": { "id": "mana-potion-1", "name": "Mana Potion", "type": "potion", "weight": 0.5, "description": "Restores 10 MP", "effects": { "mpRestore": 10 }, "consumable": true },
+      "tileX": 1, "tileY": 4
     }
   ]
 }

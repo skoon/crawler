@@ -1,73 +1,67 @@
-# React + TypeScript + Vite
+# Dungeon Crawler — Eye of the Beholder-style
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Overview
 
-Currently, two official plugins are available:
+A first-person tile-based dungeon crawler built with React, Three.js, and TypeScript. Classic grid-based RPG gameplay inspired by Eye of the Beholder.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tech Stack
 
-## React Compiler
+| Layer | Choice |
+|---|---|
+| Build | Vite |
+| Language | TypeScript |
+| UI | React 19 |
+| 3D Rendering | Three.js via `@react-three/fiber` + `@react-three/drei` |
+| State Management | Zustand |
+| Layout | CSS Grid (3-pane) |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features
 
-## Expanding the ESLint configuration
+### Phase 1 — Core Foundation (Complete)
+- 3-pane UI layout: Party \| 3D Dungeon View \| Stats/Inventory/Log
+- Tile-based grid movement with smooth camera lerp
+- Wall collision detection and movement boundaries
+- Textured 3D dungeon rendering (walls, floors, ceilings)
+- Door interaction (open/close with Space/Enter)
+- Secret doors (auto-reveal when walking adjacent)
+- Turn-based combat system with Attack/Defend/Use Item
+- Enemy AI with BFS pathfinding
+- Inventory system (pickup, equip, unequip, use consumables)
+- Fog of war with line-of-sight and exploration tracking
+- Save/load system (5 slots + F5 quicksave / F9 quickload)
+- Main menu with New Game / Load / Level Editor / About
+- In-game pause menu (Escape)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Phase 2 — Dungeon Building (Complete)
+- Multi-level dungeon architecture with stairs transitions
+- JSON dungeon format with loader utility
+- In-browser map editor for creating custom levels
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Phase 3 — Gameplay & Advanced Systems (In Progress)
+- M16: Advanced Combat & Magic System — MP, spells, status effects
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Controls
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Key | Action |
+|---|---|
+| W / Arrow Up | Move forward |
+| S / Arrow Down | Move backward |
+| A / Arrow Left | Turn left |
+| D / Arrow Right | Turn right |
+| Shift + A / Left | Strafe left |
+| Shift + D / Right | Strafe right |
+| Space / Enter | Interact (doors) |
+| Escape | Pause / In-game menu |
+| F5 | Quicksave |
+| F9 | Quickload |
+
+## Getting Started
+
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Project Status
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Active development. See [docs/PLAN.md](PLAN.md) for the full roadmap and [docs/milestone_status.md](milestone_status.md) for current progress.

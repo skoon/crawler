@@ -46,3 +46,26 @@ export function resolveEnemyAttack(
   const damage = hit ? Math.max(1, rollDice(enemyDamage) + enemyDamageBonus) : 0
   return { hit, damage }
 }
+
+export function rollDamage(notation: string): number {
+  return rollDice(notation)
+}
+
+export function resolveMagicMissile(spellPower: number): { damage: number; logMessage: string } {
+  const damage = rollDice('1d4') + 1
+  return { damage, logMessage: `Magic Missile strikes for ${damage} damage!` }
+}
+
+export function resolveFireball(spellPower: number): { damage: number; logMessage: string } {
+  const damage = rollDice('2d6')
+  return { damage, logMessage: `Fireball explodes for ${damage} damage to all enemies!` }
+}
+
+export function resolveHealSpell(spellPower: number): { healing: number; logMessage: string } {
+  const healing = rollDice('2d6') + 2
+  return { healing, logMessage: `Heal restores ${healing} HP.` }
+}
+
+export function resolveSleepDuration(): number {
+  return rollDice('1d3')
+}
