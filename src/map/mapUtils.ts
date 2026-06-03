@@ -6,6 +6,10 @@ import {
   TILE_STAIRS_DOWN,
   TILE_DOOR_CLOSED,
   TILE_SECRET_DOOR,
+  TILE_PRESSURE_PLATE,
+  TILE_TELEPORTER,
+  TILE_TRAP_HIDDEN,
+  TILE_SWITCH,
 } from '../types'
 
 export function isWalkable(tile: number): boolean {
@@ -14,7 +18,11 @@ export function isWalkable(tile: number): boolean {
     tile === TILE_STAIRS_UP ||
     tile === TILE_STAIRS_DOWN ||
     tile === TILE_DOOR_CLOSED ||
-    tile === TILE_DOOR
+    tile === TILE_DOOR ||
+    tile === TILE_PRESSURE_PLATE ||
+    tile === TILE_TELEPORTER ||
+    tile === TILE_TRAP_HIDDEN ||
+    tile === TILE_SWITCH
   )
 }
 
@@ -37,6 +45,22 @@ export function isDoor(tile: number): boolean {
 
 export function isStairs(tile: number): boolean {
   return tile === TILE_STAIRS_UP || tile === TILE_STAIRS_DOWN
+}
+
+export function isTrap(tile: number): boolean {
+  return tile === TILE_TRAP_HIDDEN
+}
+
+export function isTeleporter(tile: number): boolean {
+  return tile === TILE_TELEPORTER
+}
+
+export function isPressurePlate(tile: number): boolean {
+  return tile === TILE_PRESSURE_PLATE
+}
+
+export function isSwitch(tile: number): boolean {
+  return tile === TILE_SWITCH
 }
 
 export function getTile(map: number[][], x: number, y: number): number {

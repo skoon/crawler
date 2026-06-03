@@ -241,6 +241,21 @@
   height: 100%;
 }
 
+/* ─── Automap ─── */
+.automap {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  z-index: 5;
+  pointer-events: none;
+}
+.automap-frame {
+  background: rgba(5, 5, 5, 0.85);
+  border: 2px solid;
+  border-color: #3a3a3a #0a0a0a #0a0a0a #3a3a3a;
+  padding: 4px;
+}
+
 /* ─── Main Menu ─── */
 .main-menu {
   display: flex;

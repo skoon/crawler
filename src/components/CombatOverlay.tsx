@@ -14,8 +14,6 @@ export function CombatOverlay() {
   const selectedIndex = useGameStore((s) => s.selectedMemberIndex)
   const currentTargetEnemyId = useGameStore((s) => s.currentTargetEnemyId)
   const inventory = useGameStore((s) => s.inventory)
-  const activeStatusEffects = useGameStore((s) => s.activeStatusEffects)
-
   const setCombatState = useGameStore((s) => s.setCombatState)
   const setCurrentTargetEnemyId = useGameStore((s) => s.setCurrentTargetEnemyId)
   const damageEnemy = useGameStore((s) => s.damageEnemy)

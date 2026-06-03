@@ -1,5 +1,5 @@
 import { useGameStore } from '../store'
-import type { PartyMember, Enemy, StatusEffect } from '../types'
+import type { StatusEffect } from '../types'
 
 let effectCounter = 0
 
@@ -84,7 +84,6 @@ export function processStatusEffects(): string[] {
     if (newDuration > 0) {
       remaining.push({ ...effect, duration: newDuration })
     } else {
-      const name = effect.name.toLowerCase()
       messages.push(`${effect.name} on ${effect.targetId} has worn off.`)
     }
   }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { loadGame, getSaveSlots } from '../systems/saveLoad'
 import { useGameStore } from '../store'
 import catacombsLevel from '../map/catacombs_1.json'
+import catacombsLevel2 from '../map/catacombs_2.json'
 import type { LevelData } from '../types'
 
 interface Props {
@@ -26,7 +27,10 @@ export function MainMenu({ onStart, onEditor }: Props) {
   }
 
   const handleNewGame = () => {
-    useGameStore.getState().loadLevel(catacombsLevel as LevelData)
+    const store = useGameStore.getState()
+    store.registerLevel(catacombsLevel as LevelData)
+    store.registerLevel(catacombsLevel2 as LevelData)
+    store.changeLevel('catacombs_1', catacombsLevel.startPosition, catacombsLevel.startFacing)
     onStart()
   }
 

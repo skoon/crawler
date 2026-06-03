@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { GameState, PartyMember, LevelData, LevelScopedState } from './types'
 import { level1, level2 } from './map/sampleDungeon'
-import { isOpaque } from './map/mapUtils'
+import { isOpaque, isDoor } from './map/mapUtils'
 
 const party: PartyMember[] = [
   { id: '1', name: 'Aldric', class: 'Fighter', level: 1, hp: 12, maxHp: 12, mp: 0, maxMp: 0, ac: 18, str: 16, dex: 12, con: 14, int: 10, wis: 8, cha: 11, xp: 0, status: [], equipment: {} },
@@ -41,6 +41,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   mapItems: initialLevel.items,
   inventory: [],
   activeStatusEffects: [],
+  triggerStates: {},
+  switchStates: {},
   currentLevelId: initialLevel.id,
   levels,
   perLevelStates: {},
@@ -243,6 +245,119 @@ export const useGameStore = create<GameState>((set, get) => ({
     activeStatusEffects: state.activeStatusEffects.filter((e) => e.id !== effectId),
   })),
 
+  activateTrigger: (x, y) => set((state) => {
+    const key = `${x},${y}`
+    if (state.triggerStates[key]) return state
+    const level = state.levels[state.currentLevelId]
+    const link = level?.triggerLinks?.find((l) => l.triggerX === x && l.triggerY === y)
+    if (!link) return state
+
+    const logEntries: string[] = []
+    const newDoorStates = { ...state.doorStates }
+    const newSecretDoors = { ...state.secretDoorsRevealed }
+
+    if (link.action === 'open_door' || link.action === 'close_door') {
+      const dk = `${link.targetX},${link.targetY}`
+      const tile = state.dungeonMap[link.targetY]?.[link.targetX]
+      if (tile !== undefined && isDoor(tile)) {
+        const opening = link.action === 'open_door'
+        newDoorStates[dk] = opening
+        logEntries.push(opening ? 'A door slides open!' : 'A door slams shut!')
+      }
+    } else if (link.action === 'reveal_secret_door') {
+      const sk = `${link.targetX},${link.targetY}`
+      if (!newSecretDoors[sk]) {
+        newSecretDoors[sk] = true
+        logEntries.push('You hear a grinding noise... a secret door is revealed!')
+      }
+    } else if (link.action === 'damage') {
+      const amount = link.damageAmount ?? 1
+      logEntries.push(`A trap fires! ${amount} damage!`)
+      const newParty = state.party.map((m) => ({
+        ...m,
+        hp: Math.max(0, m.hp - amount),
+      }))
+      return {
+        party: newParty,
+        triggerStates: { ...state.triggerStates, [key]: true },
+        log: [...state.log, ...logEntries],
+      }
+    }
+
+    return {
+      triggerStates: { ...state.triggerStates, [key]: true },
+      doorStates: newDoorStates,
+      secretDoorsRevealed: newSecretDoors,
+      log: [...state.log, ...logEntries],
+    }
+  }),
+
+  toggleSwitch: (x, y) => set((state) => {
+    const key = `${x},${y}`
+    const current = state.switchStates[key] ?? false
+    const newState = !current
+    const level = state.levels[state.currentLevelId]
+    const link = level?.triggerLinks?.find(
+      (l) => l.triggerX === x && l.triggerY === y && l.triggerType === 'switch'
+    )
+    if (!link) {
+      return { switchStates: { ...state.switchStates, [key]: newState } }
+    }
+
+    const logEntries: string[] = [`You flip the switch ${newState ? 'on' : 'off'}.`]
+    const newDoorStates = { ...state.doorStates }
+    const newSecretDoors = { ...state.secretDoorsRevealed }
+
+    if (link.action === 'open_door') {
+      const dk = `${link.targetX},${link.targetY}`
+      const tile = state.dungeonMap[link.targetY]?.[link.targetX]
+      if (tile !== undefined && isDoor(tile)) {
+        newDoorStates[dk] = newState
+        logEntries.push(newState ? 'A door opens!' : 'A door closes!')
+      }
+    } else if (link.action === 'close_door') {
+      const dk = `${link.targetX},${link.targetY}`
+      const tile = state.dungeonMap[link.targetY]?.[link.targetX]
+      if (tile !== undefined && isDoor(tile)) {
+        newDoorStates[dk] = newState
+        logEntries.push(newState ? 'A door closes!' : 'A door opens!')
+      }
+    } else if (link.action === 'reveal_secret_door') {
+      const sk = `${link.targetX},${link.targetY}`
+      if (newState && !newSecretDoors[sk]) {
+        newSecretDoors[sk] = true
+        logEntries.push('A secret door is revealed!')
+      }
+    } else if (link.action === 'damage') {
+      const amount = link.damageAmount ?? 1
+      logEntries.push(`A trap fires! ${amount} damage!`)
+      const newParty = state.party.map((m) => ({
+        ...m,
+        hp: Math.max(0, m.hp - amount),
+      }))
+      return {
+        party: newParty,
+        switchStates: { ...state.switchStates, [key]: newState },
+        log: [...state.log, ...logEntries],
+      }
+    }
+
+    return {
+      switchStates: { ...state.switchStates, [key]: newState },
+      doorStates: newDoorStates,
+      secretDoorsRevealed: newSecretDoors,
+      log: [...state.log, ...logEntries],
+    }
+  }),
+
+  damagePartyAll: (amount) => set((state) => ({
+    party: state.party.map((m) => ({
+      ...m,
+      hp: Math.max(0, m.hp - amount),
+    })),
+    log: [...state.log, `All party members take ${amount} damage!`],
+  })),
+
   changeLevel: (levelId, entry, facing) => {
     const state = get()
 
@@ -253,6 +368,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       secretDoorsRevealed: state.secretDoorsRevealed,
       encounterTriggers: state.encounterTriggers,
       mapItems: state.mapItems,
+      triggerStates: state.triggerStates,
+      switchStates: state.switchStates,
     }
     const perLevelStates = { ...state.perLevelStates, [state.currentLevelId]: scoped }
 
@@ -277,6 +394,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       exploredTiles: saved?.exploredTiles ?? {},
       doorStates: saved?.doorStates ?? {},
       secretDoorsRevealed: saved?.secretDoorsRevealed ?? {},
+      triggerStates: saved?.triggerStates ?? {},
+      switchStates: saved?.switchStates ?? {},
       combatState: 'idle',
       enemies: [],
       currentTargetEnemyId: null,
@@ -292,4 +411,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ levels })
     state.changeLevel(level.id, level.startPosition, level.startFacing)
   },
+
+  registerLevel: (level) => set((state) => ({
+    levels: { ...state.levels, [level.id]: level },
+  })),
 }))

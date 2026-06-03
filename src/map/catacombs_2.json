@@ -1,0 +1,34 @@
+{
+  "id": "catacombs_2",
+  "name": "The Crypts",
+  "width": 12,
+  "height": 12,
+  "startPosition": { "x": 2, "y": 2 },
+  "startFacing": 0,
+  "tiles": [
+    [0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,1,1,1,1,0,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,4,1,1,0],
+    [0,1,1,1,6,1,0,1,1,1,1,0],
+    [0,1,1,1,1,1,0,1,1,1,1,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,3,0,1,1,1,1,1,1,1,1,0],
+    [0,1,0,1,1,1,1,1,1,1,1,0],
+    [0,1,0,1,1,1,6,1,1,1,1,0],
+    [0,1,0,1,1,1,1,0,0,0,1,0],
+    [0,1,1,1,1,1,1,0,1,1,1,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0]
+  ],
+  "encounters": [
+    { "x": 1, "y": 7, "enemies": [{ "name": "Skeleton", "hp": 10, "maxHp": 10, "ac": 14, "thac0": 17, "damage": "1d8", "damageBonus": 1, "xp": 35 }] },
+    { "x": 1, "y": 9, "enemies": [{ "name": "Skeleton", "hp": 10, "maxHp": 10, "ac": 14, "thac0": 17, "damage": "1d8", "damageBonus": 1, "xp": 35 }] },
+    { "x": 10, "y": 8, "enemies": [{ "name": "Zombie", "hp": 15, "maxHp": 15, "ac": 12, "thac0": 16, "damage": "1d6", "damageBonus": 2, "xp": 50 }] }
+  ],
+  "items": [
+    { "item": { "id": "iron-shield", "name": "Iron Shield", "type": "shield", "weight": 6, "description": "A sturdy iron shield", "effects": { "acBonus": 2 }, "consumable": false }, "tileX": 10, "tileY": 1 },
+    { "item": { "id": "healing-potion-2", "name": "Healing Potion", "type": "potion", "weight": 0.5, "description": "Restores 2d4 HP", "effects": { "hpBonus": 0 }, "consumable": true }, "tileX": 5, "tileY": 10 }
+  ],
+  "transitions": [
+    { "tileX": 8, "tileY": 2, "targetLevelId": "catacombs_1", "targetPosition": { "x": 8, "y": 5 }, "targetFacing": 0 }
+  ]
+}

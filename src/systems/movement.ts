@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useGameStore } from '../store'
-import { isSolid, isDoor, isStairs, getTile } from '../map/mapUtils'
+import { isSolid, isDoor, isStairs, isSwitch, getTile } from '../map/mapUtils'
 import { TILE_STAIRS_UP, TILE_SECRET_DOOR } from '../types'
 import { useKeyboard } from '../hooks/useKeyboard'
 import { saveGame, loadGame } from './saveLoad'
@@ -53,6 +53,11 @@ export function useMovementSystem(isPaused: boolean = false) {
         const tile = getTile(state.dungeonMap, doorX, doorY)
         if (isDoor(tile)) {
           state.toggleDoor(doorX, doorY)
+          lastMove.current = now
+          return
+        }
+        if (isSwitch(tile)) {
+          state.toggleSwitch(doorX, doorY)
           lastMove.current = now
           return
         }

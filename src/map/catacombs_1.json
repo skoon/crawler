@@ -11,7 +11,7 @@
     [0,1,1,1,1,0,1,1,1,1,1,0],
     [0,1,1,1,1,6,1,1,1,1,1,0],
     [0,1,1,1,1,0,1,1,1,1,1,0],
-    [0,0,0,0,0,0,0,7,3,0,0,0],
+    [0,0,0,0,0,0,0,7,5,0,0,0],
     [0,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,1,1,1,1,0],
@@ -46,5 +46,8 @@
       "item": { "id": "mana-potion-1", "name": "Mana Potion", "type": "potion", "weight": 0.5, "description": "Restores 10 MP", "effects": { "mpRestore": 10 }, "consumable": true },
       "tileX": 1, "tileY": 4
     }
+  ],
+  "transitions": [
+    { "tileX": 8, "tileY": 5, "targetLevelId": "catacombs_2", "targetPosition": { "x": 8, "y": 2 }, "targetFacing": 0 }
   ]
 }

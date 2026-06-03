@@ -8,6 +8,7 @@ import { useMovementSystem } from './systems/movement'
 import { useEncounterCheck } from './systems/encounterCheck'
 import { useItemPickup } from './systems/itemPickup'
 import { useSecretDoorDetect } from './systems/secretDoorDetect'
+import { useTrapSystem } from './systems/trapSystem'
 import { useState, useEffect } from 'react'
 import { useFogOfWar } from './systems/fogOfWar'
 import { MainMenu } from './components/MainMenu'
@@ -15,6 +16,7 @@ import { InGameMenu } from './components/InGameMenu'
 import { Editor } from './components/editor/Editor'
 import './App.css'
 import { useGameStore } from './store'
+import { Automap } from './components/Automap'
 
 interface GameProps {
   onQuit: () => void
@@ -26,6 +28,7 @@ function Game({ onQuit }: GameProps) {
   useEncounterCheck()
   useItemPickup()
   useSecretDoorDetect()
+  useTrapSystem()
   useFogOfWar()
 
   useEffect(() => {
@@ -46,11 +49,12 @@ function Game({ onQuit }: GameProps) {
       <main className="pane pane-center">
         <div>
           <Canvas>
-            <ambientLight intensity={0.8} />
+            <ambientLight intensity={2.5} />
             <DungeonView />
             <DungeonViewCamera />
           </Canvas>
           <CombatOverlay />
+          <Automap />
           {isPaused && <InGameMenu onClose={() => setIsPaused(false)} onQuit={onQuit} />}
         </div>
       </main>

@@ -47,6 +47,9 @@ export interface LevelData {
   transitions?: LevelTransition[];
   floorTexture?: string;
   wallTexture?: string;
+  trapConfig?: Record<string, TrapConfig>;
+  triggerLinks?: TriggerLink[];
+  teleporters?: Record<string, TeleportDestination>;
 }
 
 export interface LevelScopedState {
@@ -55,6 +58,8 @@ export interface LevelScopedState {
   secretDoorsRevealed: Record<string, boolean>;
   encounterTriggers: EncounterTrigger[];
   mapItems: MapItem[];
+  triggerStates: Record<string, boolean>;
+  switchStates: Record<string, boolean>;
 }
 
 export interface Enemy {
@@ -187,6 +192,13 @@ export interface GameState {
   perLevelStates: Record<string, LevelScopedState>;
   changeLevel: (levelId: string, entry: TilePosition, facing: number) => void;
   loadLevel: (level: LevelData) => void;
+  registerLevel: (level: LevelData) => void;
+
+  triggerStates: Record<string, boolean>;
+  switchStates: Record<string, boolean>;
+  activateTrigger: (x: number, y: number) => void;
+  toggleSwitch: (x: number, y: number) => void;
+  damagePartyAll: (amount: number) => void;
 }
 
 export const TILE_WALL = 0;
@@ -197,5 +209,33 @@ export const TILE_STAIRS_UP = 4;
 export const TILE_STAIRS_DOWN = 5;
 export const TILE_DOOR_CLOSED = 6;
 export const TILE_SECRET_DOOR = 7;
+export const TILE_PRESSURE_PLATE = 8;
+export const TILE_TELEPORTER = 9;
+export const TILE_TRAP_HIDDEN = 10;
+export const TILE_SWITCH = 11;
 
 export const TILE_SIZE = 2.25;
+
+export interface TriggerLink {
+  triggerX: number;
+  triggerY: number;
+  triggerType: 'pressure_plate' | 'switch';
+  action: 'open_door' | 'close_door' | 'reveal_secret_door' | 'damage';
+  targetX: number;
+  targetY: number;
+  damageAmount?: number;
+  damageDice?: string;
+}
+
+export interface TrapConfig {
+  damageAmount: number;
+  statusEffect?: string;
+  statusDuration?: number;
+  logMessage: string;
+}
+
+export interface TeleportDestination {
+  targetX: number;
+  targetY: number;
+  targetFacing: number;
+}

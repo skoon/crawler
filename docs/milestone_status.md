@@ -1,7 +1,7 @@
 # Project Milestone Status
 
-> **Current milestone: M16 — Advanced Combat & Magic System**
-> MP system, spell casting (Magic Missile, Fireball, Heal, Sleep, Haste, Shield), and status effects (poison, paralysis, burn, sleep, haste, shield) implemented.
+> **Current milestone: M17 — Interactive Puzzles & Traps**
+> Pressure plates, teleporters, hidden traps, switches, and a trigger/action link system implemented.
 
 ## Phase 1: The Core Foundation
 - [x] **M1: Basic Grid Map & React Setup**
@@ -24,7 +24,7 @@
 
 ## Phase 3: Gameplay & Advanced Systems
 - [x] **M16: Advanced Combat & Magic System** (MP, spells, status effects)
-- [ ] **M17: Interactive Puzzles & Traps**
+- [x] **M17: Interactive Puzzles & Traps**
 - [ ] **M18: The Automap**
 - [ ] **M19: NPCs, Dialogue, & Shops**
 - [ ] **M20: Dungeon Modules (ZIP Imports)**

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useGameStore } from '../store'
 import { isOpaque, isDoor } from '../map/mapUtils'
-import { TILE_SIZE, TILE_WALL, TILE_SECRET_DOOR, TILE_STAIRS_UP, TILE_STAIRS_DOWN } from '../types'
+import { TILE_SIZE, TILE_WALL, TILE_SECRET_DOOR, TILE_STAIRS_UP, TILE_STAIRS_DOWN, TILE_PRESSURE_PLATE, TILE_TELEPORTER, TILE_TRAP_HIDDEN, TILE_SWITCH } from '../types'
 import type { MapItem } from '../types'
 import { useFrame } from '@react-three/fiber'
 import { Mesh } from 'three'
@@ -186,6 +186,50 @@ export function DungeonView() {
             <mesh key={`stairs-dn-${x}-${y}`} position={[x * TILE_SIZE + TILE_SIZE / 2, 0.05, y * TILE_SIZE + TILE_SIZE / 2]}>
               <planeGeometry args={[TILE_SIZE * 0.6, TILE_SIZE * 0.6]} />
               <meshBasicMaterial color="#a44" transparent opacity={0.7} />
+            </mesh>
+          )
+          key++
+        }
+
+        // Pressure plate
+        if (tile === TILE_PRESSURE_PLATE) {
+          elements.push(
+            <mesh key={`plate-${x}-${y}`} position={[x * TILE_SIZE + TILE_SIZE / 2, 0.02, y * TILE_SIZE + TILE_SIZE / 2]}>
+              <planeGeometry args={[TILE_SIZE * 0.7, TILE_SIZE * 0.7]} />
+              <meshStandardMaterial color="#4488ff" transparent opacity={0.5} />
+            </mesh>
+          )
+          key++
+        }
+
+        // Teleporter
+        if (tile === TILE_TELEPORTER) {
+          elements.push(
+            <mesh key={`tp-${x}-${y}`} position={[x * TILE_SIZE + TILE_SIZE / 2, 0.02, y * TILE_SIZE + TILE_SIZE / 2]}>
+              <planeGeometry args={[TILE_SIZE * 0.6, TILE_SIZE * 0.6]} />
+              <meshStandardMaterial color="#aa44ff" transparent opacity={0.6} />
+            </mesh>
+          )
+          key++
+        }
+
+        // Hidden trap (faint marker)
+        if (tile === TILE_TRAP_HIDDEN) {
+          elements.push(
+            <mesh key={`trap-${x}-${y}`} position={[x * TILE_SIZE + TILE_SIZE / 2, 0.01, y * TILE_SIZE + TILE_SIZE / 2]}>
+              <planeGeometry args={[TILE_SIZE * 0.4, TILE_SIZE * 0.4]} />
+              <meshStandardMaterial color="#ff4444" transparent opacity={0.15} />
+            </mesh>
+          )
+          key++
+        }
+
+        // Switch (small pillar on the east wall)
+        if (tile === TILE_SWITCH) {
+          elements.push(
+            <mesh key={`sw-${x}-${y}`} position={[x * TILE_SIZE + TILE_SIZE - 0.15, 0.6, y * TILE_SIZE + TILE_SIZE / 2]}>
+              <boxGeometry args={[0.1, 0.4, 0.1]} />
+              <meshStandardMaterial color="#ffaa00" />
             </mesh>
           )
           key++

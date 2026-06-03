@@ -1,6 +1,7 @@
 import {
   TILE_WALL, TILE_FLOOR, TILE_DOOR_CLOSED, TILE_PIT,
   TILE_SECRET_DOOR, TILE_STAIRS_DOWN, TILE_STAIRS_UP,
+  TILE_PRESSURE_PLATE, TILE_TELEPORTER, TILE_TRAP_HIDDEN, TILE_SWITCH,
 } from '../types'
 import type { LevelData } from '../types'
 
@@ -11,6 +12,10 @@ const P = TILE_PIT
 const SD = TILE_SECRET_DOOR
 const SU = TILE_STAIRS_UP
 const SDN = TILE_STAIRS_DOWN
+const PP = TILE_PRESSURE_PLATE
+const TP = TILE_TELEPORTER
+const TR = TILE_TRAP_HIDDEN
+const SW = TILE_SWITCH
 
 export const level1: LevelData = {
   id: 'catacombs_1',
@@ -23,8 +28,8 @@ export const level1: LevelData = {
     [W,W,W,W,W,W,W,W,W,W,W,W],
     [W,F,F,F,F,W,F,F,F,F,F,W],
     [W,F,F,F,F,W,F,F,F,F,F,W],
-    [W,F,F,F,F,D,F,F,F,F,F,W],
-    [W,F,F,F,F,W,F,F,F,F,F,W],
+    [W,F,F,PP,F,D,F,F,F,F,F,W],
+    [W,F,F,F,F,W,F,TR,F,F,F,W],
     [W,W,W,W,W,W,W,SD,SDN,W,W,W],
     [W,F,F,F,F,F,F,F,F,F,F,W],
     [W,F,F,F,F,F,F,F,F,F,F,W],
@@ -45,6 +50,12 @@ export const level1: LevelData = {
   transitions: [
     { tileX: 8, tileY: 5, targetLevelId: 'catacombs_2', targetPosition: { x: 8, y: 2 }, targetFacing: 0 },
   ],
+  trapConfig: {
+    '7,4': { damageAmount: 3, logMessage: 'A poison dart shoots from the wall! You take 3 damage!' },
+  },
+  triggerLinks: [
+    { triggerX: 3, triggerY: 3, triggerType: 'pressure_plate', action: 'open_door', targetX: 5, targetY: 3 },
+  ],
 }
 
 export const level2: LevelData = {
@@ -57,15 +68,15 @@ export const level2: LevelData = {
   tiles: [
     [W,W,W,W,W,W,W,W,W,W,W,W],
     [W,F,F,F,F,F,W,F,F,F,F,W],
-    [W,F,F,F,F,F,SU,F,F,F,F,W],
+    [W,F,F,F,F,F,F,F,SU,F,F,W],
     [W,F,F,F,D,F,W,F,F,F,F,W],
     [W,F,F,F,F,F,W,F,F,F,F,W],
     [W,W,W,W,W,W,W,W,W,W,W,W],
     [W,P,W,F,F,F,F,F,F,F,F,W],
     [W,F,W,F,F,F,F,F,F,F,F,W],
     [W,F,W,F,F,F,D,F,F,F,F,W],
-    [W,F,W,F,F,F,F,W,W,W,F,W],
-    [W,F,F,F,F,F,F,W,F,F,F,W],
+    [W,F,W,F,F,F,F,W,W,W,SW,W],
+    [W,F,F,F,PP,F,F,W,TR,TP,F,W],
     [W,W,W,W,W,W,W,W,W,W,W,W],
   ],
   encounters: [
@@ -81,4 +92,14 @@ export const level2: LevelData = {
   transitions: [
     { tileX: 8, tileY: 2, targetLevelId: 'catacombs_1', targetPosition: { x: 8, y: 5 }, targetFacing: 0 },
   ],
+  trapConfig: {
+    '8,10': { damageAmount: 2, statusEffect: 'poison', statusDuration: 3, logMessage: 'A poison trap triggers! You take 2 damage and are poisoned!' },
+  },
+  triggerLinks: [
+    { triggerX: 4, triggerY: 10, triggerType: 'pressure_plate', action: 'open_door', targetX: 5, targetY: 8 },
+    { triggerX: 10, triggerY: 9, triggerType: 'switch', action: 'reveal_secret_door', targetX: 1, targetY: 8 },
+  ],
+  teleporters: {
+    '9,10': { targetX: 2, targetY: 6, targetFacing: 0 },
+  },
 }
