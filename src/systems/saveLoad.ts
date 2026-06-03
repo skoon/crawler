@@ -17,6 +17,8 @@ export function saveGame(slot: number): boolean {
       mapItems: state.mapItems,
       inventory: state.inventory,
       encounterTriggers: state.encounterTriggers,
+      triggerStates: state.triggerStates,
+      switchStates: state.switchStates,
       timestamp: new Date().toISOString(),
     }
     localStorage.setItem(`${SAVE_PREFIX}${slot}`, JSON.stringify(data))
@@ -47,6 +49,8 @@ export function loadGame(slot: number): boolean {
       mapItems: data.mapItems ?? [],
       inventory: data.inventory ?? [],
       encounterTriggers: data.encounterTriggers ?? [],
+      triggerStates: data.triggerStates ?? {},
+      switchStates: data.switchStates ?? {},
       activeStatusEffects: [],
     })
     return true

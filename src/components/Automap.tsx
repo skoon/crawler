@@ -16,6 +16,10 @@ const TILE_COLORS: Record<number, string> = {
   [TILE_STAIRS_UP]: '#282',
   [TILE_STAIRS_DOWN]: '#822',
   [TILE_DOOR_CLOSED]: '#864',
+  [TILE_PRESSURE_PLATE]: '#48f',
+  [TILE_TELEPORTER]: '#a4f',
+  [TILE_TRAP_HIDDEN]: '#a22',
+  [TILE_SWITCH]: '#ca4',
 }
 
 const FACING_ARROWS = ['▲', '►', '▼', '◄']
