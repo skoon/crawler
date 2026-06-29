@@ -19,6 +19,8 @@ export function useMovementSystem(isPaused: boolean = false) {
       if (now - lastMove.current < MOVE_INTERVAL) return
 
       const state = useGameStore.getState()
+      if (state.activeNpcId !== null || state.showShop) return
+
       const pressed = keys.current
       let dx = 0
       let dy = 0
@@ -50,6 +52,15 @@ export function useMovementSystem(isPaused: boolean = false) {
         else if (facing === 1) doorX += 1
         else if (facing === 2) doorY += 1
         else if (facing === 3) doorX -= 1
+        
+        // NPC interaction check
+        const npc = state.npcs.find((n) => n.tileX === doorX && n.tileY === doorY)
+        if (npc) {
+          state.startDialogue(npc.id)
+          lastMove.current = now
+          return
+        }
+
         const tile = getTile(state.dungeonMap, doorX, doorY)
         if (isDoor(tile)) {
           state.toggleDoor(doorX, doorY)

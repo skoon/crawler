@@ -1,6 +1,7 @@
 import { useGameStore } from '../store'
 import { isWalkable } from '../map/mapUtils'
 import { resolveEnemyAttack } from './combatResolution'
+import { canAct, getEffectiveAc } from './statusEffects'
 
 interface Point {
   x: number
@@ -72,6 +73,11 @@ export function processEnemyTurn() {
   for (const enemy of enemies) {
     if (enemy.hp <= 0) continue
 
+    if (!canAct(state.activeStatusEffects, enemy.id)) {
+      state.addLogMessage(`${enemy.name} is unable to act and skips their turn.`)
+      continue
+    }
+
     const dx = Math.abs(enemy.tileX - playerPosition.x)
     const dy = Math.abs(enemy.tileY - playerPosition.y)
 
@@ -85,7 +91,9 @@ export function processEnemyTurn() {
         (sum, item) => sum + (item?.effects.acBonus ?? 0), 0
       )
 
-      const result = resolveEnemyAttack(enemy.thac0, enemy.damage, enemy.damageBonus, target.ac - acBonus)
+      const baseAc = target.ac - acBonus
+      const effectiveAc = getEffectiveAc(baseAc, state.activeStatusEffects, target.id)
+      const result = resolveEnemyAttack(enemy.thac0, enemy.damage, enemy.damageBonus, effectiveAc)
       if (result.hit) {
         state.damageMember(targetIdx, result.damage)
         state.addLogMessage(`${enemy.name} hits ${target.name} for ${result.damage} damage!`)

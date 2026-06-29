@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { GameState, PartyMember, LevelData, LevelScopedState } from './types'
 import { level1, level2 } from './map/sampleDungeon'
 import { isOpaque, isDoor } from './map/mapUtils'
+import { itemTemplates } from './data/items'
 
 const party: PartyMember[] = [
   { id: '1', name: 'Aldric', class: 'Fighter', level: 1, hp: 12, maxHp: 12, mp: 0, maxMp: 0, ac: 18, str: 16, dex: 12, con: 14, int: 10, wis: 8, cha: 11, xp: 0, status: [], equipment: {} },
@@ -44,6 +45,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   triggerStates: {},
   switchStates: {},
   currentLevelId: initialLevel.id,
+  gold: 100,
+  activeNpcId: null,
+  currentDialogueNodeId: null,
+  showShop: false,
+  npcs: initialLevel.npcs ?? [],
   levels,
   perLevelStates: {},
 
@@ -370,6 +376,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       mapItems: state.mapItems,
       triggerStates: state.triggerStates,
       switchStates: state.switchStates,
+      npcs: state.npcs,
     }
     const perLevelStates = { ...state.perLevelStates, [state.currentLevelId]: scoped }
 
@@ -396,6 +403,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       secretDoorsRevealed: saved?.secretDoorsRevealed ?? {},
       triggerStates: saved?.triggerStates ?? {},
       switchStates: saved?.switchStates ?? {},
+      npcs: saved?.npcs ?? target.npcs ?? [],
       combatState: 'idle',
       enemies: [],
       currentTargetEnemyId: null,
@@ -415,4 +423,107 @@ export const useGameStore = create<GameState>((set, get) => ({
   registerLevel: (level) => set((state) => ({
     levels: { ...state.levels, [level.id]: level },
   })),
+
+  startDialogue: (npcId) => {
+    const npc = get().npcs.find((n) => n.id === npcId)
+    if (!npc) return
+    set({
+      activeNpcId: npcId,
+      currentDialogueNodeId: npc.dialogueStartNodeId,
+      showShop: false,
+    })
+  },
+
+  chooseDialogueOption: (choice) => {
+    const nextNodeId = choice.nextNodeId
+    const action = choice.action
+
+    if (action === 'open_shop') {
+      set({ showShop: true })
+    } else if (action === 'heal_party') {
+      const newParty = get().party.map((m) => ({
+        ...m,
+        hp: m.maxHp,
+        mp: m.maxMp,
+      }))
+      set({
+        party: newParty,
+        log: [...get().log, 'The priest heals your wounds and restores your magic!'],
+      })
+      if (nextNodeId === null) {
+        set({ activeNpcId: null, currentDialogueNodeId: null })
+      } else {
+        set({ currentDialogueNodeId: nextNodeId })
+      }
+    } else {
+      if (nextNodeId === null) {
+        set({ activeNpcId: null, currentDialogueNodeId: null })
+      } else {
+        set({ currentDialogueNodeId: nextNodeId })
+      }
+    }
+  },
+
+  endDialogue: () => set({ activeNpcId: null, currentDialogueNodeId: null, showShop: false }),
+
+  buyItem: (itemId, price) => {
+    const state = get()
+    if (state.gold < price) {
+      set({ log: [...state.log, 'Not enough gold!'] })
+      return
+    }
+
+    const template = itemTemplates[itemId]
+    if (!template) return
+
+    const merchant = state.npcs.find((n) => n.id === state.activeNpcId)
+    if (!merchant || !merchant.shopItems || !merchant.shopItems.includes(itemId)) {
+      return
+    }
+
+    // Remove one copy of itemId from merchant's stock
+    let removed = false
+    const newShopItems = merchant.shopItems.filter((id) => {
+      if (!removed && id === itemId) {
+        removed = true
+        return false
+      }
+      return true
+    })
+
+    const newItem = { ...template, id: `${template.id}_instance_${Date.now()}` }
+
+    set({
+      gold: state.gold - price,
+      inventory: [...state.inventory, newItem],
+      npcs: state.npcs.map((n) =>
+        n.id === state.activeNpcId ? { ...n, shopItems: newShopItems } : n
+      ),
+      log: [...state.log, `Bought ${template.name} for ${price} gold.`],
+    })
+  },
+
+  sellItem: (itemId, price) => {
+    const state = get()
+    const item = state.inventory.find((i) => i.id === itemId)
+    if (!item) return
+
+    const merchant = state.npcs.find((n) => n.id === state.activeNpcId)
+    if (!merchant) return
+
+    const baseId = item.id.includes('_instance_')
+      ? item.id.split('_instance_')[0]
+      : item.id
+
+    const newShopItems = [...(merchant.shopItems ?? []), baseId]
+
+    set({
+      gold: state.gold + price,
+      inventory: state.inventory.filter((i) => i.id !== itemId),
+      npcs: state.npcs.map((n) =>
+        n.id === state.activeNpcId ? { ...n, shopItems: newShopItems } : n
+      ),
+      log: [...state.log, `Sold ${item.name} for ${price} gold.`],
+    })
+  },
 }))

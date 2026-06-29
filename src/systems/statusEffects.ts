@@ -101,7 +101,7 @@ export function getEffectiveAc(
   targetId: string,
 ): number {
   if (isAffectedBy(effects, targetId, 'shield')) {
-    return baseAc + 4
+    return baseAc - 4
   }
   return baseAc
 }
@@ -121,4 +121,22 @@ export function getAttackMultiplier(
 ): number {
   if (isAffectedBy(effects, targetId, 'haste')) return 2
   return 1
+}
+
+import { useEffect } from 'react'
+
+export function useStatusEffectsSystem() {
+  useEffect(() => {
+    const unsub = useGameStore.subscribe((state, prev) => {
+      if (state.playerPosition === prev.playerPosition) return
+      if (state.combatState !== 'idle') return
+
+      const fresh = useGameStore.getState()
+      const messages = processStatusEffects()
+      for (const msg of messages) {
+        fresh.addLogMessage(msg)
+      }
+    })
+    return unsub
+  }, [])
 }

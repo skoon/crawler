@@ -414,3 +414,222 @@
   border-color: #e8d5a3;
   color: #e8d5a3;
 }
+
+/* ─── Dialogue & Shop Overlays ─── */
+.dialogue-overlay {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  pointer-events: auto;
+}
+.dialogue-box {
+  background: rgba(18, 15, 12, 0.95);
+  border: 3px double #e8d5a3;
+  border-radius: 8px;
+  padding: 16px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+  font-family: 'Palatino', 'Georgia', serif;
+}
+.dialogue-header {
+  font-size: 18px;
+  font-weight: bold;
+  color: #e8d5a3;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #5a4b36;
+  padding-bottom: 4px;
+  text-shadow: 1px 1px 2px #000;
+}
+.dialogue-body {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #ddcbb4;
+  margin-bottom: 16px;
+  min-height: 50px;
+}
+.dialogue-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dialogue-choice-btn {
+  background: #2a2018;
+  color: #e8d5a3;
+  border: 1px solid #5a4b36;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.dialogue-choice-btn:hover:not(:disabled) {
+  background: #463220;
+  border-color: #e8d5a3;
+  color: #fff;
+  box-shadow: 0 0 5px rgba(232, 213, 163, 0.3);
+}
+.dialogue-choice-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.dialogue-exit {
+  background: #1b120c;
+  border-color: #3b281b;
+  color: #a4927f;
+  margin-top: 4px;
+}
+.dialogue-exit:hover {
+  background: #321808;
+  color: #f08080;
+  border-color: #f08080;
+}
+
+.shop-box {
+  background: rgba(18, 15, 12, 0.95);
+  border: 3px double #e8d5a3;
+  border-radius: 8px;
+  padding: 16px;
+  width: 100%;
+  max-width: 650px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+  font-family: 'Palatino', 'Georgia', serif;
+}
+.shop-gold-hud {
+  font-size: 15px;
+  color: #ddcbb4;
+  text-align: right;
+  margin-top: -30px;
+  margin-bottom: 20px;
+}
+.gold-value {
+  color: #e8d5a3;
+  font-weight: bold;
+  text-shadow: 1px 1px 1px #000;
+}
+.shop-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.shop-panel {
+  border: 1px solid #5a4b36;
+  background: rgba(5, 5, 5, 0.5);
+  border-radius: 4px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  height: 300px;
+}
+.shop-panel-title {
+  font-size: 14px;
+  color: #e8d5a3;
+  margin: 0 0 10px 0;
+  text-align: center;
+  border-bottom: 1px dashed #5a4b36;
+  padding-bottom: 4px;
+}
+.shop-items-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+.shop-empty-msg {
+  color: #7a6a57;
+  font-style: italic;
+  text-align: center;
+  margin-top: 40px;
+  font-size: 13px;
+}
+.shop-item-card {
+  background: #231b14;
+  border: 1px solid #443224;
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.shop-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.shop-item-name {
+  font-size: 13px;
+  font-weight: bold;
+  color: #ddcbb4;
+}
+.shop-item-qty {
+  font-size: 11px;
+  color: #8a7a67;
+  background: #110d0a;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+.shop-item-desc {
+  font-size: 11px;
+  color: #8a7a67;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+.shop-item-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.shop-item-price {
+  font-size: 12px;
+  color: #e8d5a3;
+  font-weight: bold;
+}
+.shop-buy-btn, .shop-sell-btn {
+  background: #3c2a1c;
+  color: #e8d5a3;
+  border: 1px solid #5a4b36;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 3px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+}
+.shop-buy-btn:hover:not(:disabled) {
+  background: #5c3e28;
+  border-color: #e8d5a3;
+  color: #fff;
+}
+.shop-sell-btn {
+  background: #25281c;
+  color: #ccdca3;
+  border-color: #3b422a;
+}
+.shop-sell-btn:hover {
+  background: #394028;
+  border-color: #ccdca3;
+  color: #fff;
+}
+.shop-buy-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.shop-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}

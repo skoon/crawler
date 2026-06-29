@@ -50,6 +50,7 @@ export interface LevelData {
   trapConfig?: Record<string, TrapConfig>;
   triggerLinks?: TriggerLink[];
   teleporters?: Record<string, TeleportDestination>;
+  npcs?: NPC[];
 }
 
 export interface LevelScopedState {
@@ -60,6 +61,7 @@ export interface LevelScopedState {
   mapItems: MapItem[];
   triggerStates: Record<string, boolean>;
   switchStates: Record<string, boolean>;
+  npcs: NPC[];
 }
 
 export interface Enemy {
@@ -137,6 +139,29 @@ export interface StatusEffect {
   type: 'poison' | 'paralysis' | 'burn' | 'sleep' | 'haste' | 'shield';
 }
 
+export interface DialogueChoice {
+  text: string;
+  nextNodeId: string | null; // null ends conversation
+  action?: 'open_shop' | 'heal_party';
+}
+
+export interface DialogueNode {
+  id: string;
+  text: string;
+  choices: DialogueChoice[];
+}
+
+export interface NPC {
+  id: string;
+  name: string;
+  tileX: number;
+  tileY: number;
+  dialogueStartNodeId: string;
+  dialogueNodes: Record<string, DialogueNode>;
+  shopItems?: string[]; // list of item IDs this merchant currently has in stock
+  color?: string; // custom billboard color (e.g. Hex string)
+}
+
 export interface GameState {
   party: PartyMember[];
   selectedMemberIndex: number;
@@ -182,6 +207,12 @@ export interface GameState {
 
   activeStatusEffects: StatusEffect[];
 
+  gold: number;
+  activeNpcId: string | null;
+  currentDialogueNodeId: string | null;
+  showShop: boolean;
+  npcs: NPC[];
+
   spendMp: (memberIndex: number, amount: number) => void;
   restoreMp: (memberIndex: number, amount: number) => void;
   addStatusEffect: (effect: StatusEffect) => void;
@@ -199,6 +230,12 @@ export interface GameState {
   activateTrigger: (x: number, y: number) => void;
   toggleSwitch: (x: number, y: number) => void;
   damagePartyAll: (amount: number) => void;
+
+  startDialogue: (npcId: string) => void;
+  chooseDialogueOption: (choice: DialogueChoice) => void;
+  endDialogue: () => void;
+  buyItem: (itemId: string, price: number) => void;
+  sellItem: (itemId: string, price: number) => void;
 }
 
 export const TILE_WALL = 0;

@@ -4,6 +4,8 @@ import { DungeonViewCamera } from './components/DungeonViewCamera'
 import { PartyPane } from './components/PartyPane'
 import { RightPane } from './components/RightPane'
 import { CombatOverlay } from './components/CombatOverlay'
+import { DialogueOverlay } from './components/DialogueOverlay'
+import { ShopOverlay } from './components/ShopOverlay'
 import { useMovementSystem } from './systems/movement'
 import { useEncounterCheck } from './systems/encounterCheck'
 import { useItemPickup } from './systems/itemPickup'
@@ -11,6 +13,7 @@ import { useSecretDoorDetect } from './systems/secretDoorDetect'
 import { useTrapSystem } from './systems/trapSystem'
 import { useState, useEffect } from 'react'
 import { useFogOfWar } from './systems/fogOfWar'
+import { useStatusEffectsSystem } from './systems/statusEffects'
 import { MainMenu } from './components/MainMenu'
 import { InGameMenu } from './components/InGameMenu'
 import { Editor } from './components/editor/Editor'
@@ -30,11 +33,17 @@ function Game({ onQuit }: GameProps) {
   useSecretDoorDetect()
   useTrapSystem()
   useFogOfWar()
+  useStatusEffectsSystem()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Escape') {
-        setIsPaused(p => !p)
+        const state = useGameStore.getState()
+        if (state.activeNpcId !== null) {
+          state.endDialogue()
+        } else {
+          setIsPaused(p => !p)
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -49,11 +58,15 @@ function Game({ onQuit }: GameProps) {
       <main className="pane pane-center">
         <div>
           <Canvas>
-            <ambientLight intensity={2.5} />
+            <color attach="background" args={['#050505']} />
+            <fog attach="fog" args={['#050505', 3, 11]} />
+            <ambientLight intensity={0.4} />
             <DungeonView />
             <DungeonViewCamera />
           </Canvas>
           <CombatOverlay />
+          <DialogueOverlay />
+          <ShopOverlay />
           <Automap />
           {isPaused && <InGameMenu onClose={() => setIsPaused(false)} onQuit={onQuit} />}
         </div>

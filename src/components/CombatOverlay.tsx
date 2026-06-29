@@ -4,7 +4,7 @@ import { resolvePlayerAttack } from '../systems/combatResolution'
 import { resolveMagicMissile, resolveFireball, resolveHealSpell, resolveSleepDuration } from '../systems/combatResolution'
 import { processEnemyTurn } from '../systems/enemyAI'
 import { spells } from '../data/spells'
-import { createStatusEffect, processStatusEffects } from '../systems/statusEffects'
+import { createStatusEffect, processStatusEffects, canAct, getEffectiveAc } from '../systems/statusEffects'
 import type { Spell } from '../types'
 
 export function CombatOverlay() {
@@ -14,6 +14,7 @@ export function CombatOverlay() {
   const selectedIndex = useGameStore((s) => s.selectedMemberIndex)
   const currentTargetEnemyId = useGameStore((s) => s.currentTargetEnemyId)
   const inventory = useGameStore((s) => s.inventory)
+  const activeStatusEffects = useGameStore((s) => s.activeStatusEffects)
   const setCombatState = useGameStore((s) => s.setCombatState)
   const setCurrentTargetEnemyId = useGameStore((s) => s.setCurrentTargetEnemyId)
   const damageEnemy = useGameStore((s) => s.damageEnemy)
@@ -34,6 +35,7 @@ export function CombatOverlay() {
   const aliveEnemies = enemies.filter((e) => e.hp > 0)
   const consumables = inventory.filter((i) => i.consumable)
   const member = party[selectedIndex]
+  const memberCanAct = member ? canAct(activeStatusEffects, member.id) : false
   const availableSpells = member
     ? spells.filter((s) => s.allowedClasses.includes(member.class) && member.mp >= s.mpCost)
     : []
@@ -71,7 +73,8 @@ export function CombatOverlay() {
     const weaponDice = weapon?.effects.damageDice
     const weaponBonus = weapon?.effects.damageBonus
 
-    const result = resolvePlayerAttack(member.str, target.ac, weaponDice, weaponBonus)
+    const targetAc = getEffectiveAc(target.ac, activeStatusEffects, target.id)
+    const result = resolvePlayerAttack(member.str, targetAc, weaponDice, weaponBonus)
     if (result.hit) {
       damageEnemy(target.id, result.damage)
       addLogMessage(`${member.name} attacks ${target.name} for ${result.damage} damage!`)
@@ -91,6 +94,14 @@ export function CombatOverlay() {
     } else {
       setCombatState('enemyTurn')
     }
+  }
+
+  const handleSkipTurn = () => {
+    if (combatState !== 'playerTurn') return
+    if (!member) return
+    addLogMessage(`${member.name} is unable to act and skips their turn.`)
+    processStatusEffects()
+    setCombatState('enemyTurn')
   }
 
   const handleDefend = () => {
@@ -231,44 +242,78 @@ export function CombatOverlay() {
   return (
     <div className="combat-overlay">
       <div className="combat-enemy-list">
-        {enemies.map((enemy) => (
-          <div
-            key={enemy.id}
-            className={`combat-enemy${enemy.hp <= 0 ? ' dead' : ''}${currentTargetEnemyId === enemy.id ? ' targeted' : ''}`}
-            onClick={() => enemy.hp > 0 && setCurrentTargetEnemyId(enemy.id)}
-          >
-            <span className="combat-enemy-name">{enemy.name}</span>
-            {enemy.hp > 0 && (
-              <div className="combat-enemy-hp-outer">
-                <div
-                  className="combat-enemy-hp-inner"
-                  style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }}
-                />
+        {enemies.map((enemy) => {
+          const enemyEffects = activeStatusEffects.filter((e) => e.targetId === enemy.id && e.duration > 0)
+          return (
+            <div
+              key={enemy.id}
+              className={`combat-enemy${enemy.hp <= 0 ? ' dead' : ''}${currentTargetEnemyId === enemy.id ? ' targeted' : ''}`}
+              onClick={() => enemy.hp > 0 && setCurrentTargetEnemyId(enemy.id)}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="combat-enemy-name">{enemy.name}</span>
+                {enemyEffects.length > 0 && (
+                  <span style={{ display: 'flex', gap: '2px' }}>
+                    {enemyEffects.map((e) => (
+                      <span
+                        key={e.id}
+                        style={{
+                          fontSize: '8px',
+                          background: e.type === 'poison' ? '#5a2' : e.type === 'sleep' ? '#66d' : e.type === 'shield' ? '#cc3' : '#a22',
+                          color: '#fff',
+                          padding: '1px 3px',
+                          borderRadius: '2px',
+                          textTransform: 'uppercase',
+                          fontWeight: 'bold',
+                        }}
+                        title={`${e.name} (${e.duration}r)`}
+                      >
+                        {e.name.substring(0, 3)}
+                      </span>
+                    ))}
+                  </span>
+                )}
               </div>
-            )}
-            {enemy.hp <= 0 && <span className="combat-enemy-dead">(defeated)</span>}
-          </div>
-        ))}
+              {enemy.hp > 0 && (
+                <div className="combat-enemy-hp-outer">
+                  <div
+                    className="combat-enemy-hp-inner"
+                    style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }}
+                  />
+                </div>
+              )}
+              {enemy.hp <= 0 && <span className="combat-enemy-dead">(defeated)</span>}
+            </div>
+          )
+        })}
       </div>
 
       {combatState === 'playerTurn' && !allEnemiesDead && (
         <div className="combat-actions">
-          <button className="combat-btn" onClick={handleAttack}>Attack</button>
-          <button className="combat-btn" onClick={handleDefend}>Defend</button>
-          <button
-            className="combat-btn"
-            onClick={() => setShowItemMenu(!showItemMenu)}
-            disabled={consumables.length === 0}
-          >
-            Use Item{consumables.length > 0 && ` (${consumables.length})`}
-          </button>
-          <button
-            className="combat-btn"
-            onClick={handleCastClick}
-            disabled={availableSpells.length === 0}
-          >
-            Cast{availableSpells.length > 0 && ` (${availableSpells.length})`}
-          </button>
+          {memberCanAct ? (
+            <>
+              <button className="combat-btn" onClick={handleAttack}>Attack</button>
+              <button className="combat-btn" onClick={handleDefend}>Defend</button>
+              <button
+                className="combat-btn"
+                onClick={() => setShowItemMenu(!showItemMenu)}
+                disabled={consumables.length === 0}
+              >
+                Use Item{consumables.length > 0 && ` (${consumables.length})`}
+              </button>
+              <button
+                className="combat-btn"
+                onClick={handleCastClick}
+                disabled={availableSpells.length === 0}
+              >
+                Cast{availableSpells.length > 0 && ` (${availableSpells.length})`}
+              </button>
+            </>
+          ) : (
+            <button className="combat-btn" onClick={handleSkipTurn}>
+              Skip Turn (Cannot Act)
+            </button>
+          )}
         </div>
       )}
 

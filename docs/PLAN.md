@@ -36,6 +36,58 @@ Tile-based grid movement — classic EoB style.
 
 ---
 
+## Minimal MVP Definition
+
+The MVP is the smallest slice that *feels* like Eye of the Beholder. It corresponds to
+**Phase 1 (M1–M12)** below; everything in Phases 2–4 is post-MVP.
+
+**MVP = one explorable level, a 4-member party, first-person 3D movement with wall
+collision, doors, floor items you can pick up, one enemy type with simple combat, and a
+win/lose condition.**
+
+MVP feature checklist:
+- [ ] First-person 3D view of a tile grid (walls, floor, ceiling) — M3
+- [ ] Grid movement: forward/back/strafe + 90° turning, keyboard + on-screen buttons — M4
+- [ ] Wall collision (cannot walk through `TILE_WALL` or closed doors) — M4
+- [ ] Doors that open/close on interaction — M10
+- [ ] A party of 4 with stats, HP, and AC shown in a party pane — M5/M6
+- [ ] Items on floor tiles; walk over / interact to pick up into shared inventory — M9
+- [ ] One enemy type that occupies a tile; proximity encounter — M7/M8
+- [ ] Attack resolution (THAC0 vs AC, damage dice) with a scrolling event log — M7
+- [ ] Win condition (reach the stairs) and lose condition (party wiped) — M10/M12
+- [ ] Persistence: a reload resumes position, party HP, and inventory — M12
+
+**Definition of Done (MVP):** a player can load the game, see a first-person 3D dungeon,
+walk one level with wall collision, open a door, pick up an item, fight an enemy, win or
+lose, reach the exit, and reload without losing progress. `npm run dev` runs it;
+`npm run build` produces a clean production bundle.
+
+---
+
+## Architecture & Conventions
+
+Follow these throughout — they keep milestones composable and the systems testable.
+
+- **Types first.** All shared shapes and tile constants live in `src/types.ts`
+  (e.g. `TILE_WALL = 0`, `TILE_FLOOR = 1`, `TILE_DOOR = 2`, `TILE_SIZE = 2.25`). The full
+  `GameState` interface — state fields *and* action signatures — is declared there.
+- **One store.** `src/store.ts` (Zustand) is the single source of truth. All gameplay
+  state and every mutating action live here; components subscribe to slices.
+- **Systems are pure-ish modules** under `src/systems/` (movement, combat resolution,
+  enemy AI, encounter checks, fog of war, item pickup, traps, status effects). Keep dice
+  rolls and rules logic out of components.
+- **Components are presentational.** Files in `src/components/` read store slices and call
+  store actions; they don't own game rules.
+- **Levels are data.** A `LevelData` object (2D `number[][]` tile grid + start
+  position/facing + encounters + items + optional transitions/traps/NPCs) is authored in
+  `src/map/`, either in TypeScript (`sampleDungeon.ts`) or JSON (`catacombs_1.json`) and
+  loaded at runtime.
+
+> Forward-looking direction (post-M20) lives in [`ROADMAP.md`](./ROADMAP.md); current
+> per-milestone progress is tracked in [`milestone_status.md`](./milestone_status.md).
+
+---
+
 ## Milestones
 
 ### M1 — Project Scaffold & Pane Layout

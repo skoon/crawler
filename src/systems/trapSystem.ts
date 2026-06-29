@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useGameStore } from '../store'
 import { TILE_TRAP_HIDDEN, TILE_PRESSURE_PLATE, TILE_TELEPORTER } from '../types'
+import { createStatusEffect } from './statusEffects'
 
 export function useTrapSystem() {
   useEffect(() => {
@@ -20,6 +21,15 @@ export function useTrapSystem() {
           const fresh = useGameStore.getState()
           fresh.addLogMessage(trap.logMessage)
           fresh.damagePartyAll(trap.damageAmount)
+          if (trap.statusEffect) {
+            const effectType = trap.statusEffect as any
+            for (const member of fresh.party) {
+              if (member.hp > 0) {
+                const effect = createStatusEffect(effectType, member.id, 'party_member', trap.statusDuration ?? 3)
+                fresh.addStatusEffect(effect)
+              }
+            }
+          }
         } else {
           const fresh = useGameStore.getState()
           fresh.addLogMessage('A trap triggers! You take 2 damage!')

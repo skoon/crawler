@@ -1,7 +1,7 @@
 # Project Milestone Status
 
-> **Current milestone: M17 — Interactive Puzzles & Traps**
-> Pressure plates, teleporters, hidden traps, switches, and a trigger/action link system implemented.
+> **Current milestone: M20 — Dungeon Modules (ZIP Imports)**
+> Implement JSZip and package maps, assets, and campaigns into loadable modules.
 
 ## Phase 1: The Core Foundation
 - [x] **M1: Basic Grid Map & React Setup**
@@ -25,8 +25,8 @@
 ## Phase 3: Gameplay & Advanced Systems
 - [x] **M16: Advanced Combat & Magic System** (MP, spells, status effects)
 - [x] **M17: Interactive Puzzles & Traps**
-- [ ] **M18: The Automap**
-- [ ] **M19: NPCs, Dialogue, & Shops**
+- [x] **M18: The Automap**
+- [x] **M19: NPCs, Dialogue, & Shops**
 - [ ] **M20: Dungeon Modules (ZIP Imports)**
 
 ## Phase 4: Atmosphere & Polish

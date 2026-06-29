@@ -56,6 +56,69 @@ export const level1: LevelData = {
   triggerLinks: [
     { triggerX: 3, triggerY: 3, triggerType: 'pressure_plate', action: 'open_door', targetX: 5, targetY: 3 },
   ],
+  npcs: [
+    {
+      id: 'decimus',
+      name: 'Priest Decimus',
+      tileX: 2,
+      tileY: 4,
+      color: '#44aa44',
+      dialogueStartNodeId: 'start',
+      dialogueNodes: {
+        start: {
+          id: 'start',
+          text: 'Hello, children. I am Decimus, a priest of the Light. The catacombs below are crawling with undead. How can I help you?',
+          choices: [
+            { text: 'We are wounded, holy father. Can you heal us?', nextNodeId: 'heal', action: 'heal_party' },
+            { text: 'Tell us about this place.', nextNodeId: 'info' },
+            { text: 'Goodbye.', nextNodeId: null }
+          ]
+        },
+        heal: {
+          id: 'heal',
+          text: 'May the Light restore your health and shield your spirit.',
+          choices: [
+            { text: 'Thank you, father.', nextNodeId: null }
+          ]
+        },
+        info: {
+          id: 'info',
+          text: 'These tombs were once sacred, but a dark power has infested them. Watch your step, traps are hidden everywhere, and pressure plates can trigger doors. Find the stairs down to seek the source of the curse.',
+          choices: [
+            { text: 'Thank you for the warning.', nextNodeId: 'start' }
+          ]
+        }
+      }
+    },
+    {
+      id: 'kaelen',
+      name: 'Merchant Kaelen',
+      tileX: 1,
+      tileY: 1,
+      color: '#4444cc',
+      dialogueStartNodeId: 'start',
+      shopItems: ['healing-potion', 'healing-potion', 'mana-potion', 'short-sword', 'leather-armor', 'shield'],
+      dialogueNodes: {
+        start: {
+          id: 'start',
+          text: "Aha, travelers! Name's Kaelen. I buy and sell weapons, armor, and gear. Care to do business?",
+          choices: [
+            { text: 'Show me your wares.', nextNodeId: null, action: 'open_shop' },
+            { text: 'What is a merchant doing down here?', nextNodeId: 'story' },
+            { text: 'Goodbye.', nextNodeId: null }
+          ]
+        },
+        story: {
+          id: 'story',
+          text: "Where there's danger, there's opportunity! Adventurers like you leave behind valuable items... and need to buy supplies. It's a gold mine down here, literally!",
+          choices: [
+            { text: "Let's trade, then.", nextNodeId: null, action: 'open_shop' },
+            { text: 'I see. Let me think about it.', nextNodeId: 'start' }
+          ]
+        }
+      }
+    }
+  ],
 }
 
 export const level2: LevelData = {

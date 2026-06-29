@@ -9,10 +9,12 @@ import { useRef } from 'react'
 import { EnemyBillboard } from './EnemyBillboard'
 import { useTexture } from '@react-three/drei'
 import { RepeatWrapping } from 'three'
-import wallImg from '../assets/textures/wall1.jpg'
-import floorImg from '../assets/textures/floor1.jpg'
-import ceilingImg from '../assets/textures/ceiling1.jpg'
-import doorImg from '../assets/textures/closed_door.jpg'
+import wallImg from '../assets/textures/kenney_retro-textures-fantasy/PNG/wall_stone.png'
+import floorImg from '../assets/textures/kenney_retro-textures-fantasy/PNG/floor_stone_pattern.png'
+import ceilingImg from '../assets/textures/kenney_retro-textures-fantasy/PNG/floor_wood_planks.png'
+import doorImg from '../assets/textures/kenney_retro-textures-fantasy/PNG/door_wood.png'
+import stairsUpImg from '../assets/textures/stairs_up.png'
+import stairsDownImg from '../assets/textures/stairs_down.png'
 
 const WALL_HEIGHT = 3
 const WALL_THICKNESS = 0.1
@@ -62,11 +64,14 @@ export function DungeonView() {
   const mapItems = useGameStore((s) => s.mapItems)
   const storeWallTexture = useGameStore((s) => s.wallTexture)
   const storeFloorTexture = useGameStore((s) => s.floorTexture)
+  const npcs = useGameStore((s) => s.npcs)
 
   const wallTexture = useTexture(storeWallTexture || wallImg)
   const floorTexture = useTexture(storeFloorTexture || floorImg)
   const ceilingTexture = useTexture(ceilingImg)
   const doorTexture = useTexture(doorImg)
+  const stairsUpTexture = useTexture(stairsUpImg)
+  const stairsDownTexture = useTexture(stairsDownImg)
 
   wallTexture.wrapS = wallTexture.wrapT = RepeatWrapping
   wallTexture.repeat.set(1, 1)
@@ -174,18 +179,18 @@ export function DungeonView() {
         // Stairs markers
         if (tile === TILE_STAIRS_UP) {
           elements.push(
-            <mesh key={`stairs-up-${x}-${y}`} position={[x * TILE_SIZE + TILE_SIZE / 2, 0.05, y * TILE_SIZE + TILE_SIZE / 2]}>
-              <planeGeometry args={[TILE_SIZE * 0.6, TILE_SIZE * 0.6]} />
-              <meshBasicMaterial color="#4a4" transparent opacity={0.7} />
+            <mesh key={`stairs-up-${x}-${y}`} position={[x * TILE_SIZE + TILE_SIZE / 2, 0.01, y * TILE_SIZE + TILE_SIZE / 2]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[TILE_SIZE, TILE_SIZE]} />
+              <meshStandardMaterial map={stairsUpTexture} />
             </mesh>
           )
           key++
         }
         if (tile === TILE_STAIRS_DOWN) {
           elements.push(
-            <mesh key={`stairs-dn-${x}-${y}`} position={[x * TILE_SIZE + TILE_SIZE / 2, 0.05, y * TILE_SIZE + TILE_SIZE / 2]}>
-              <planeGeometry args={[TILE_SIZE * 0.6, TILE_SIZE * 0.6]} />
-              <meshBasicMaterial color="#a44" transparent opacity={0.7} />
+            <mesh key={`stairs-dn-${x}-${y}`} position={[x * TILE_SIZE + TILE_SIZE / 2, 0.01, y * TILE_SIZE + TILE_SIZE / 2]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[TILE_SIZE, TILE_SIZE]} />
+              <meshStandardMaterial map={stairsDownTexture} />
             </mesh>
           )
           key++
@@ -263,5 +268,18 @@ export function DungeonView() {
     [mapItems],
   )
 
-  return <>{meshes}{enemySprites}{itemPrimitives}</>
+  const npcSprites = useMemo(
+    () =>
+      npcs.map((npc) => (
+        <EnemyBillboard
+          key={npc.id}
+          position={[npc.tileX * TILE_SIZE + TILE_SIZE / 2, 1.2, npc.tileY * TILE_SIZE + TILE_SIZE / 2]}
+          color={npc.color ?? '#44aa44'}
+          label={npc.name}
+        />
+      )),
+    [npcs],
+  )
+
+  return <>{meshes}{enemySprites}{itemPrimitives}{npcSprites}</>
 }

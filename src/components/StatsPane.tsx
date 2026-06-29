@@ -20,6 +20,8 @@ export function StatsPane() {
   const party = useGameStore((s) => s.party)
   const selectedIndex = useGameStore((s) => s.selectedMemberIndex)
   const member = party[selectedIndex]
+  const activeStatusEffects = useGameStore((s) => s.activeStatusEffects)
+  const gold = useGameStore((s) => s.gold)
 
   if (!member) return <div className="stats-empty">No character selected</div>
 
@@ -28,6 +30,8 @@ export function StatsPane() {
   const effectiveStr = member.str + bonuses.str
   const effectiveDex = member.dex + bonuses.dex
   const effectiveCon = member.con + bonuses.con
+
+  const effects = activeStatusEffects.filter((e) => e.targetId === member.id && e.duration > 0)
 
   return (
     <div className="stats-pane">
@@ -39,6 +43,37 @@ export function StatsPane() {
           <span className="stats-label">HP</span>
           <span>{member.hp} / {member.maxHp}</span>
         </div>
+        {member.maxMp > 0 && (
+          <div className="stats-row">
+            <span className="stats-label">MP</span>
+            <span>{member.mp} / {member.maxMp}</span>
+          </div>
+        )}
+        {effects.length > 0 && (
+          <div className="stats-row">
+            <span className="stats-label">Status</span>
+            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+              {effects.map((e) => (
+                <span
+                  key={e.id}
+                  className={`status-badge status-badge-${e.type}`}
+                  style={{
+                    fontSize: '10px',
+                    background: e.type === 'poison' ? '#5a2' : e.type === 'sleep' ? '#66d' : e.type === 'shield' ? '#cc3' : '#a22',
+                    color: '#fff',
+                    padding: '1px 4px',
+                    borderRadius: '3px',
+                    textTransform: 'uppercase',
+                    fontWeight: 'bold',
+                  }}
+                  title={`${e.name} (${e.duration} rounds left)`}
+                >
+                  {e.name} ({e.duration})
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="stats-row">
           <span className="stats-label">AC</span>
           <span>
@@ -55,6 +90,7 @@ export function StatsPane() {
         </div>
         <div className="stats-row"><span className="stats-label">Level</span><span>{member.level}</span></div>
         <div className="stats-row"><span className="stats-label">XP</span><span>{member.xp}</span></div>
+        <div className="stats-row"><span className="stats-label">Gold</span><span>{gold} GP</span></div>
       </div>
 
       <div className="stats-section">
