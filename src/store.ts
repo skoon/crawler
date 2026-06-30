@@ -424,6 +424,20 @@ export const useGameStore = create<GameState>((set, get) => ({
     levels: { ...state.levels, [level.id]: level },
   })),
 
+  loadModule: (moduleLevels, entryLevelId) => {
+    const state = get()
+    if (moduleLevels.length === 0) {
+      state.addLogMessage('Module contains no levels.')
+      return
+    }
+    const newLevels = { ...state.levels }
+    for (const lvl of moduleLevels) newLevels[lvl.id] = lvl
+    const entry = newLevels[entryLevelId] ?? moduleLevels[0]
+    // Start the campaign fresh: drop any previously saved per-level state.
+    set({ levels: newLevels, perLevelStates: {} })
+    get().changeLevel(entry.id, entry.startPosition, entry.startFacing)
+  },
+
   startDialogue: (npcId) => {
     const npc = get().npcs.find((n) => n.id === npcId)
     if (!npc) return

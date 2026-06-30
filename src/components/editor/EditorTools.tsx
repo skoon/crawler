@@ -1,6 +1,8 @@
 import React, { useRef } from 'react'
 import type { LevelData } from '../../types'
 import type { EditorMode } from './Editor'
+import { useGameStore } from '../../store'
+import { exportModule, downloadModule } from '../../systems/dungeonModule'
 
 interface Props {
   level: LevelData
@@ -29,6 +31,25 @@ export function EditorTools(props: Props) {
     document.body.appendChild(downloadAnchorNode) // required for firefox
     downloadAnchorNode.click()
     downloadAnchorNode.remove()
+  }
+
+  const handleExportModule = async () => {
+    const current = props.level
+    // Bundle every registered level, with the current edit taking precedence by id.
+    const registered = useGameStore.getState().levels
+    const byId: Record<string, LevelData> = { ...registered, [current.id]: current }
+    const levels = Object.values(byId)
+
+    const name = prompt('Module name:', current.name || current.id || 'Untitled Module')
+    if (name === null) return // cancelled
+
+    const blob = await exportModule(levels, {
+      name: name || current.id || 'module',
+      version: '1.0.0',
+      entryLevelId: current.id,
+    })
+    const safeName = (name || current.id || 'module').replace(/[^a-z0-9_-]+/gi, '_')
+    downloadModule(blob, `${safeName}.zip`)
   }
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,6 +128,7 @@ export function EditorTools(props: Props) {
       <div className="editor-panel" style={{display:'flex', flexDirection:'column', gap:'8px'}}>
          <button onClick={props.onTest} style={{ borderColor: '#4a4', color: '#4a4' }}>Test Map</button>
          <button onClick={handleExport}>Export JSON</button>
+         <button onClick={handleExportModule}>Export Module (.zip)</button>
          <button onClick={() => fileInputRef.current?.click()}>Import JSON</button>
          <input type="file" accept=".json" style={{display:'none'}} ref={fileInputRef} onChange={handleImport} />
       </div>

@@ -1,7 +1,7 @@
 # Project Milestone Status
 
-> **Current milestone: M20 — Dungeon Modules (ZIP Imports)**
-> Implement JSZip and package maps, assets, and campaigns into loadable modules.
+> **Current milestone: M21 — Lighting, Torches & Resting**
+> Light source system, torch timers, and resting to recover HP.
 
 ## Phase 1: The Core Foundation
 - [x] **M1: Basic Grid Map & React Setup**
@@ -27,7 +27,7 @@
 - [x] **M17: Interactive Puzzles & Traps**
 - [x] **M18: The Automap**
 - [x] **M19: NPCs, Dialogue, & Shops**
-- [ ] **M20: Dungeon Modules (ZIP Imports)**
+- [x] **M20: Dungeon Modules (ZIP Imports)**
 
 ## Phase 4: Atmosphere & Polish
 - [ ] **M21: Lighting, Torches & Resting**

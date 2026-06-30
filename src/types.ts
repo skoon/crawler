@@ -53,6 +53,22 @@ export interface LevelData {
   npcs?: NPC[];
 }
 
+export interface ModuleManifest {
+  schemaVersion: number;
+  name: string;
+  version: string;
+  author?: string;
+  description?: string;
+  entryLevelId: string;
+  levels: string[]; // relative paths to level JSON files inside the module
+  textures?: string[]; // relative paths to bundled texture files
+}
+
+export interface DungeonModule {
+  manifest: ModuleManifest;
+  levels: LevelData[];
+}
+
 export interface LevelScopedState {
   exploredTiles: Record<string, boolean>;
   doorStates: Record<string, boolean>;
@@ -224,6 +240,7 @@ export interface GameState {
   changeLevel: (levelId: string, entry: TilePosition, facing: number) => void;
   loadLevel: (level: LevelData) => void;
   registerLevel: (level: LevelData) => void;
+  loadModule: (levels: LevelData[], entryLevelId: string) => void;
 
   triggerStates: Record<string, boolean>;
   switchStates: Record<string, boolean>;

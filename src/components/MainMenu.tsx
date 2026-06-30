@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { loadGame, getSaveSlots } from '../systems/saveLoad'
+import { importModule } from '../systems/dungeonModule'
 import { useGameStore } from '../store'
 import catacombsLevel from '../map/catacombs_1.json'
 import catacombsLevel2 from '../map/catacombs_2.json'
@@ -13,6 +14,7 @@ interface Props {
 export function MainMenu({ onStart, onEditor }: Props) {
   const [view, setView] = useState<'main' | 'about' | 'load'>('main')
   const [slots, setSlots] = useState<{ slot: number; timestamp: string }[]>([])
+  const moduleInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (view === 'load') {
@@ -32,6 +34,19 @@ export function MainMenu({ onStart, onEditor }: Props) {
     store.registerLevel(catacombsLevel2 as LevelData)
     store.changeLevel('catacombs_1', catacombsLevel.startPosition, catacombsLevel.startFacing)
     onStart()
+  }
+
+  const handleLoadModule = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-selecting the same file later
+    if (!file) return
+    try {
+      const { manifest, levels } = await importModule(file)
+      useGameStore.getState().loadModule(levels, manifest.entryLevelId)
+      onStart()
+    } catch (err) {
+      alert(`Failed to load module: ${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
   if (view === 'about') {
@@ -77,8 +92,16 @@ export function MainMenu({ onStart, onEditor }: Props) {
       <h2>A First-Person Dungeon Crawl</h2>
       <button onClick={handleNewGame}>New Game</button>
       <button onClick={() => setView('load')}>Load Game</button>
+      <button onClick={() => moduleInputRef.current?.click()}>Load Module (.zip)</button>
       <button onClick={onEditor}>Level Editor</button>
       <button onClick={() => setView('about')}>About</button>
+      <input
+        type="file"
+        accept=".zip"
+        style={{ display: 'none' }}
+        ref={moduleInputRef}
+        onChange={handleLoadModule}
+      />
     </div>
   )
 }
