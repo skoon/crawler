@@ -37,6 +37,7 @@ export function InventoryPane() {
   const inventory = useGameStore((s) => s.inventory)
   const party = useGameStore((s) => s.party)
   const selectedIndex = useGameStore((s) => s.selectedMemberIndex)
+  const ammo = useGameStore((s) => s.ammo)
   const equipItem = useGameStore((s) => s.equipItem)
   const unequipItem = useGameStore((s) => s.unequipItem)
   const useItem = useGameStore((s) => s.useItem)
@@ -44,6 +45,7 @@ export function InventoryPane() {
   const member = party[selectedIndex]
   const equipment = member?.equipment ?? {}
   const totalWeight = inventory.reduce((sum, item) => sum + item.weight, 0)
+  const ammoEntries = Object.entries(ammo).filter(([, count]) => count > 0)
 
   const handleEquip = (item: Item) => {
     let slot = slotForItem(item)
@@ -88,6 +90,19 @@ export function InventoryPane() {
           )
         })}
       </div>
+      <div className="inv-section-title">Quiver</div>
+      <div className="inv-ammo">
+        {ammoEntries.length === 0 ? (
+          <span className="inv-slot-empty">[no ammo]</span>
+        ) : (
+          ammoEntries.map(([type, count]) => (
+            <span key={type} className="inv-ammo-item" title={`${count} ${type}s`}>
+              🏹 {type} × {count}
+            </span>
+          ))
+        )}
+      </div>
+
       <div className="inv-section-title">Backpack</div>
       <div className="inv-grid">
         {inventory.length === 0 ? (

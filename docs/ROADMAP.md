@@ -16,8 +16,8 @@ This document stays high-altitude: *direction and sequencing*, not step-by-step 
   systems are all in: 3D rendering, grid movement, combat, magic/MP, status effects,
   traps & puzzles, multi-level architecture, JSON levels, the in-browser map builder,
   automap, NPCs/dialogue/shops, and ZIP dungeon modules.
-- **Current milestone: M21 — Lighting, Torches & Resting.** Torch timer drives the
-  fog-of-war radius; rest to recover HP with random-encounter risk.
+- **Current milestone: M23 — Sound, Music & Atmosphere.** M21 (torches/resting) and
+  M22 (ranged combat, targeting, ammo) are complete; next is ambient audio and SFX.
 
 ---
 

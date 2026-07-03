@@ -102,7 +102,7 @@ export interface EncounterTrigger {
 
 export type CombatState = 'idle' | 'playerTurn' | 'enemyTurn' | 'victory' | 'defeat';
 
-export type ItemType = 'weapon' | 'armor' | 'shield' | 'ring' | 'potion' | 'scroll' | 'key' | 'misc';
+export type ItemType = 'weapon' | 'armor' | 'shield' | 'ring' | 'potion' | 'scroll' | 'key' | 'ammo' | 'misc';
 
 export interface Item {
   id: string;
@@ -120,6 +120,9 @@ export interface Item {
     damageBonus: number;
     damageDice: string;
     torchRefill: number;
+    range: number;       // max tiles a ranged weapon can reach
+    ammoType: string;    // e.g. "arrow", "bolt", "thrown"
+    ammoCount: number;   // how much ammo an 'ammo' pickup grants
   }>;
   consumable: boolean;
 }
@@ -223,6 +226,14 @@ export interface GameState {
   exploredTiles: Record<string, boolean>;
   exploreTile: (x: number, y: number) => void;
   exploreRadius: (centerX: number, centerY: number, radius: number) => void;
+  targetingMode: boolean;
+  targetPosition: TilePosition | null;
+  ammo: Record<string, number>;
+  setTargetingMode: (active: boolean) => void;
+  setTargetPosition: (pos: TilePosition | null) => void;
+  addAmmo: (type: string, count: number) => void;
+  consumeAmmo: (type: string) => boolean;
+
   mapItems: MapItem[];
   inventory: Item[];
   pickupItem: (tileX: number, tileY: number) => void;

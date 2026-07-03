@@ -43,6 +43,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   doorStates: {},
   secretDoorsRevealed: {},
   exploredTiles: {},
+  targetingMode: false,
+  targetPosition: null,
+  ammo: {},
   mapItems: initialLevel.items,
   inventory: [],
   activeStatusEffects: [],
@@ -67,7 +70,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ combatState: 'playerTurn', enemies, currentTargetEnemyId: null, log: [...get().log, `Ambush! ${names} appear!`] })
   },
 
-  endCombat: () => set({ combatState: 'idle', enemies: [], currentTargetEnemyId: null, defendingMemberIds: [] }),
+  endCombat: () => set({ combatState: 'idle', enemies: [], currentTargetEnemyId: null, defendingMemberIds: [], targetingMode: false, targetPosition: null }),
 
   setCombatState: (state) => set({ combatState: state }),
 
@@ -194,12 +197,37 @@ export const useGameStore = create<GameState>((set, get) => ({
     return { exploredTiles: newExplored }
   }),
 
+  setTargetingMode: (active) => set({ targetingMode: active }),
+  setTargetPosition: (pos) => set({ targetPosition: pos }),
+  addAmmo: (type, count) => set((state) => ({
+    ammo: { ...state.ammo, [type]: (state.ammo[type] ?? 0) + count },
+  })),
+  consumeAmmo: (type) => {
+    const current = get().ammo[type] ?? 0
+    if (current <= 0) return false
+    set((state) => ({ ammo: { ...state.ammo, [type]: current - 1 } }))
+    return true
+  },
+
   pickupItem: (tileX, tileY) => set((state) => {
     const idx = state.mapItems.findIndex((mi) => mi.tileX === tileX && mi.tileY === tileY)
     if (idx === -1) return state
     const mi = state.mapItems[idx]
+    const remainingMapItems = state.mapItems.filter((_, i) => i !== idx)
+
+    // Ammo goes into the shared ammo pool, not the backpack.
+    if (mi.item.type === 'ammo' && mi.item.effects.ammoType) {
+      const type = mi.item.effects.ammoType
+      const count = mi.item.effects.ammoCount ?? 1
+      return {
+        mapItems: remainingMapItems,
+        ammo: { ...state.ammo, [type]: (state.ammo[type] ?? 0) + count },
+        log: [...state.log, `Picked up ${mi.item.name} (+${count} ${type}).`],
+      }
+    }
+
     return {
-      mapItems: state.mapItems.filter((_, i) => i !== idx),
+      mapItems: remainingMapItems,
       inventory: [...state.inventory, mi.item],
       log: [...state.log, `Picked up ${mi.item.name}.`],
     }

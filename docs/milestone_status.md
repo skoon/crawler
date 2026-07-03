@@ -1,7 +1,7 @@
 # Project Milestone Status
 
-> **Current milestone: M22 — Ranged Combat & Targeting**
-> Bows/thrown weapons, targeting reticle, LOS + ammo tracking.
+> **Current milestone: M23 — Sound, Music & Atmosphere**
+> Ambient audio, footsteps, combat SFX, positional 3D sound, music.
 
 ## Phase 1: The Core Foundation
 - [x] **M1: Basic Grid Map & React Setup**
@@ -31,7 +31,7 @@
 
 ## Phase 4: Atmosphere & Polish
 - [x] **M21: Lighting, Torches & Resting**
-- [ ] **M22: Ranged Combat & Targeting**
+- [x] **M22: Ranged Combat & Targeting**
 - [ ] **M23: Sound, Music & Atmosphere**
 - [ ] **M24: Character Creation & Party Management**
 - [ ] **M25: Death, Progression & Game Over**

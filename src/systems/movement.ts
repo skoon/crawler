@@ -37,6 +37,38 @@ export function useMovementSystem(isPaused: boolean = false) {
       const state = useGameStore.getState()
       if (state.activeNpcId !== null || state.showShop) return
       if (state.isResting) return // no movement while making camp
+
+      // While aiming a ranged shot, arrows steer the reticle instead of the party.
+      if (state.targetingMode) {
+        const weapon = state.party[state.selectedMemberIndex]?.equipment.weapon
+        const range = weapon?.effects.range ?? 1
+        const base = state.targetPosition ?? state.playerPosition
+        const facing = state.playerFacing
+        const aimUp = pressed.has('ArrowUp') || pressed.has('KeyW')
+        const aimDown = pressed.has('ArrowDown') || pressed.has('KeyS')
+        const aimLeft = pressed.has('ArrowLeft') || pressed.has('KeyA')
+        const aimRight = pressed.has('ArrowRight') || pressed.has('KeyD')
+        let rdx = 0
+        let rdy = 0
+        // Facing-relative aiming so "forward" points where the party is looking.
+        if (aimUp) { if (facing === 0) rdy = -1; else if (facing === 1) rdx = 1; else if (facing === 2) rdy = 1; else rdx = -1 }
+        else if (aimDown) { if (facing === 0) rdy = 1; else if (facing === 1) rdx = -1; else if (facing === 2) rdy = -1; else rdx = 1 }
+        else if (aimLeft) { if (facing === 0) rdx = -1; else if (facing === 1) rdy = -1; else if (facing === 2) rdx = 1; else rdy = 1 }
+        else if (aimRight) { if (facing === 0) rdx = 1; else if (facing === 1) rdy = 1; else if (facing === 2) rdx = -1; else rdy = -1 }
+
+        if (rdx !== 0 || rdy !== 0) {
+          const nx = base.x + rdx
+          const ny = base.y + rdy
+          const inBounds = ny >= 0 && ny < state.dungeonMap.length && nx >= 0 && nx < state.dungeonMap[0].length
+          const inRange = Math.max(Math.abs(nx - state.playerPosition.x), Math.abs(ny - state.playerPosition.y)) <= range
+          if (inBounds && inRange) {
+            state.setTargetPosition({ x: nx, y: ny })
+            lastMove.current = now
+          }
+        }
+        return
+      }
+
       let dx = 0
       let dy = 0
       let turn = 0

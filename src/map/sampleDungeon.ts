@@ -46,6 +46,8 @@ export const level1: LevelData = {
     { item: { id: 'short-sword', name: 'Short Sword', type: 'weapon', weight: 3, description: 'A sharp iron blade', effects: { damageDice: '1d6', damageBonus: 0 }, consumable: false }, tileX: 3, tileY: 2 },
     { item: { id: 'healing-potion', name: 'Healing Potion', type: 'potion', weight: 0.5, description: 'Restores 2d4 HP', effects: { hpBonus: 0 }, consumable: true }, tileX: 8, tileY: 7 },
     { item: { id: 'leather-armor', name: 'Leather Armor', type: 'armor', weight: 10, description: 'Hardened leather protection', effects: { acBonus: 2 }, consumable: false }, tileX: 4, tileY: 9 },
+    { item: { id: 'short-bow', name: 'Short Bow', type: 'weapon', weight: 2, description: 'A ranged bow (1d6, range 5). Fires arrows using DEX.', effects: { damageDice: '1d6', damageBonus: 0, range: 5, ammoType: 'arrow' }, consumable: false }, tileX: 6, tileY: 1 },
+    { item: { id: 'arrows', name: 'Quiver of Arrows', type: 'ammo', weight: 1, description: 'A bundle of 20 arrows.', effects: { ammoType: 'arrow', ammoCount: 20 }, consumable: false }, tileX: 9, tileY: 1 },
   ],
   transitions: [
     { tileX: 8, tileY: 5, targetLevelId: 'catacombs_2', targetPosition: { x: 8, y: 2 }, targetFacing: 0 },
@@ -97,7 +99,7 @@ export const level1: LevelData = {
       tileY: 1,
       color: '#4444cc',
       dialogueStartNodeId: 'start',
-      shopItems: ['healing-potion', 'healing-potion', 'mana-potion', 'short-sword', 'leather-armor', 'shield'],
+      shopItems: ['healing-potion', 'healing-potion', 'mana-potion', 'short-sword', 'leather-armor', 'shield', 'short-bow', 'arrows', 'arrows'],
       dialogueNodes: {
         start: {
           id: 'start',

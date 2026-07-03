@@ -3,6 +3,7 @@ import { useGameStore } from '../store'
 import { resolvePlayerAttack } from '../systems/combatResolution'
 import { resolveMagicMissile, resolveFireball, resolveHealSpell, resolveSleepDuration } from '../systems/combatResolution'
 import { processEnemyTurn } from '../systems/enemyAI'
+import { resolveRangedAttack, isRangedWeapon, enemyAt, hasLineOfSight, tileDistance } from '../systems/rangedCombat'
 import { spells } from '../data/spells'
 import { createStatusEffect, processStatusEffects, canAct, getEffectiveAc } from '../systems/statusEffects'
 import type { Spell } from '../types'
@@ -14,6 +15,8 @@ export function CombatOverlay() {
   const selectedIndex = useGameStore((s) => s.selectedMemberIndex)
   const currentTargetEnemyId = useGameStore((s) => s.currentTargetEnemyId)
   const inventory = useGameStore((s) => s.inventory)
+  const ammo = useGameStore((s) => s.ammo)
+  const targetingMode = useGameStore((s) => s.targetingMode)
   const activeStatusEffects = useGameStore((s) => s.activeStatusEffects)
   const setCombatState = useGameStore((s) => s.setCombatState)
   const setCurrentTargetEnemyId = useGameStore((s) => s.setCurrentTargetEnemyId)
@@ -25,6 +28,8 @@ export function CombatOverlay() {
   const spendMp = useGameStore((s) => s.spendMp)
   const addStatusEffect = useGameStore((s) => s.addStatusEffect)
   const damageMember = useGameStore((s) => s.damageMember)
+  const setTargetingMode = useGameStore((s) => s.setTargetingMode)
+  const setTargetPosition = useGameStore((s) => s.setTargetPosition)
 
   const enemyTurnRef = useRef(false)
   const [showItemMenu, setShowItemMenu] = useState(false)
@@ -39,6 +44,11 @@ export function CombatOverlay() {
   const availableSpells = member
     ? spells.filter((s) => s.allowedClasses.includes(member.class) && member.mp >= s.mpCost)
     : []
+
+  const rangedWeapon = member?.equipment.weapon
+  const hasRanged = isRangedWeapon(rangedWeapon)
+  const ammoType = rangedWeapon?.effects.ammoType
+  const ammoLeft = ammoType ? (ammo[ammoType] ?? 0) : 0
 
   useEffect(() => {
     if (combatState === 'enemyTurn' && !enemyTurnRef.current) {
@@ -57,6 +67,115 @@ export function CombatOverlay() {
       return () => clearTimeout(timer)
     }
   }, [combatState, endCombat])
+
+  const handleRangedStart = () => {
+    if (combatState !== 'playerTurn') return
+    if (!member || member.hp <= 0 || !hasRanged) return
+    if (ammoLeft <= 0) {
+      addLogMessage(`Out of ${ammoType}s!`)
+      return
+    }
+    const { playerPosition, dungeonMap, doorStates, secretDoorsRevealed } = useGameStore.getState()
+    const range = rangedWeapon?.effects.range ?? 1
+    // Auto-aim at the nearest enemy that's actually shootable, else start at the party's feet.
+    const shootable = aliveEnemies
+      .filter((e) =>
+        tileDistance(playerPosition, { x: e.tileX, y: e.tileY }) <= range &&
+        hasLineOfSight(dungeonMap, playerPosition.x, playerPosition.y, e.tileX, e.tileY, doorStates, secretDoorsRevealed),
+      )
+      .sort(
+        (a, b) =>
+          tileDistance(playerPosition, { x: a.tileX, y: a.tileY }) -
+          tileDistance(playerPosition, { x: b.tileX, y: b.tileY }),
+      )
+    const aim = shootable[0]
+    setTargetPosition(aim ? { x: aim.tileX, y: aim.tileY } : { ...playerPosition })
+    setTargetingMode(true)
+  }
+
+  const handleRangedCancel = () => {
+    setTargetingMode(false)
+    setTargetPosition(null)
+  }
+
+  const handleRangedFire = () => {
+    if (combatState !== 'playerTurn' || !member || !hasRanged) return
+    const state = useGameStore.getState()
+    const target = state.targetPosition
+    if (!target) return
+
+    const range = rangedWeapon?.effects.range ?? 1
+    const enemy = enemyAt(aliveEnemies, target.x, target.y)
+    if (!enemy) {
+      addLogMessage('No enemy in your sights.')
+      return
+    }
+    if (tileDistance(state.playerPosition, target) > range) {
+      addLogMessage('Target is out of range.')
+      return
+    }
+    if (
+      !hasLineOfSight(
+        state.dungeonMap,
+        state.playerPosition.x,
+        state.playerPosition.y,
+        target.x,
+        target.y,
+        state.doorStates,
+        state.secretDoorsRevealed,
+      )
+    ) {
+      addLogMessage('No line of sight to the target.')
+      return
+    }
+    if (!state.consumeAmmo(ammoType!)) {
+      addLogMessage(`Out of ${ammoType}s!`)
+      handleRangedCancel()
+      return
+    }
+
+    const targetAc = getEffectiveAc(enemy.ac, activeStatusEffects, enemy.id)
+    const result = resolveRangedAttack(
+      member.dex,
+      targetAc,
+      rangedWeapon?.effects.damageDice,
+      rangedWeapon?.effects.damageBonus,
+    )
+    if (result.hit) {
+      damageEnemy(enemy.id, result.damage)
+      addLogMessage(`${member.name} shoots ${enemy.name} for ${result.damage} damage!`)
+    } else {
+      addLogMessage(`${member.name}'s shot sails past ${enemy.name}.`)
+    }
+
+    handleRangedCancel()
+    processStatusEffects()
+
+    const targetDied = result.hit && enemy.hp <= result.damage
+    const remaining = targetDied ? aliveEnemies.filter((e) => e.id !== enemy.id) : aliveEnemies
+    if (remaining.length === 0) {
+      addLogMessage('All enemies defeated!')
+      setCombatState('victory')
+    } else {
+      setCombatState('enemyTurn')
+    }
+  }
+
+  // Keyboard control while aiming a ranged shot (Enter = fire, Escape = cancel).
+  useEffect(() => {
+    if (!targetingMode) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code === 'Enter') {
+        e.preventDefault()
+        handleRangedFire()
+      } else if (e.code === 'Escape') {
+        e.preventDefault()
+        handleRangedCancel()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
 
   if (combatState === 'idle') return null
 
@@ -288,11 +407,34 @@ export function CombatOverlay() {
         })}
       </div>
 
-      {combatState === 'playerTurn' && !allEnemiesDead && (
+      {combatState === 'playerTurn' && !allEnemiesDead && targetingMode && (
+        <div className="combat-targeting">
+          <div className="combat-targeting-hint">
+            Aiming {rangedWeapon?.name} — arrows to aim, Enter to fire, Esc to cancel
+            {ammoType && <span className="combat-ammo"> · {ammoLeft} {ammoType}s left</span>}
+          </div>
+          <div className="combat-actions">
+            <button className="combat-btn" onClick={handleRangedFire}>Fire</button>
+            <button className="combat-btn" onClick={handleRangedCancel}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {combatState === 'playerTurn' && !allEnemiesDead && !targetingMode && (
         <div className="combat-actions">
           {memberCanAct ? (
             <>
               <button className="combat-btn" onClick={handleAttack}>Attack</button>
+              {hasRanged && (
+                <button
+                  className="combat-btn"
+                  onClick={handleRangedStart}
+                  disabled={ammoLeft <= 0}
+                  title={ammoLeft <= 0 ? `Out of ${ammoType}s` : `Fire ${rangedWeapon?.name}`}
+                >
+                  Ranged{ammoType ? ` (${ammoLeft})` : ''}
+                </button>
+              )}
               <button className="combat-btn" onClick={handleDefend}>Defend</button>
               <button
                 className="combat-btn"

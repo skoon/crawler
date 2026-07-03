@@ -17,6 +17,7 @@ import { useStatusEffectsSystem } from './systems/statusEffects'
 import { useTorchTimer } from './hooks/useTorchTimer'
 import { TorchHUD } from './components/TorchHUD'
 import { TorchLighting } from './components/TorchLighting'
+import { TargetingReticle } from './components/TargetingReticle'
 import { MainMenu } from './components/MainMenu'
 import { InGameMenu } from './components/InGameMenu'
 import { Editor } from './components/editor/Editor'
@@ -43,7 +44,11 @@ function Game({ onQuit }: GameProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Escape') {
         const state = useGameStore.getState()
-        if (state.activeNpcId !== null) {
+        if (state.targetingMode) {
+          // Let the combat overlay's own handler cancel aiming; don't open the pause menu.
+          state.setTargetingMode(false)
+          state.setTargetPosition(null)
+        } else if (state.activeNpcId !== null) {
           state.endDialogue()
         } else {
           setIsPaused(p => !p)
@@ -66,6 +71,7 @@ function Game({ onQuit }: GameProps) {
             <fog attach="fog" args={['#050505', 3, 11]} />
             <TorchLighting />
             <DungeonView />
+            <TargetingReticle />
             <DungeonViewCamera />
           </Canvas>
           <TorchHUD />
