@@ -10,18 +10,33 @@ const MOVE_INTERVAL = 150
 export function useMovementSystem(isPaused: boolean = false) {
   const keys = useKeyboard()
   const lastMove = useRef(0)
+  const restKeyWasDown = useRef(false)
 
   useEffect(() => {
     const handler = () => {
       if (isPaused) return
-      
+
+      const pressed = keys.current
+
+      // Rest toggle (edge-detected so a held key toggles only once).
+      const rDown = pressed.has('KeyR')
+      if (rDown && !restKeyWasDown.current) {
+        restKeyWasDown.current = true
+        const s = useGameStore.getState()
+        if (s.combatState === 'idle' && s.activeNpcId === null && !s.showShop) {
+          if (s.isResting) s.stopRest()
+          else s.startRest()
+        }
+      } else if (!rDown) {
+        restKeyWasDown.current = false
+      }
+
       const now = Date.now()
       if (now - lastMove.current < MOVE_INTERVAL) return
 
       const state = useGameStore.getState()
       if (state.activeNpcId !== null || state.showShop) return
-
-      const pressed = keys.current
+      if (state.isResting) return // no movement while making camp
       let dx = 0
       let dy = 0
       let turn = 0

@@ -256,6 +256,57 @@
   padding: 4px;
 }
 
+/* ─── Torch HUD ─── */
+.torch-hud {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 6;
+  pointer-events: none;
+  font-family: 'Palatino', 'Georgia', serif;
+  color: #d8c8a0;
+  text-shadow: 1px 1px 2px #000;
+}
+.torch-meter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(5, 5, 5, 0.7);
+  border: 1px solid #3a3a3a;
+  padding: 4px 8px;
+}
+.torch-label { font-size: 12px; letter-spacing: 1px; }
+.torch-bar-outer {
+  width: 120px;
+  height: 10px;
+  background: #222;
+  border: 1px solid #000;
+  overflow: hidden;
+}
+.torch-bar-inner { height: 100%; transition: width 0.3s, background 0.3s; }
+.torch-time { font-size: 11px; color: #a89870; min-width: 34px; text-align: right; }
+.torch-darkness {
+  background: rgba(5, 5, 5, 0.8);
+  border: 1px solid #5a1a1a;
+  padding: 4px 10px;
+  color: #c85a5a;
+  font-size: 14px;
+  letter-spacing: 3px;
+  animation: torch-pulse 1.2s ease-in-out infinite;
+}
+@keyframes torch-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.torch-resting {
+  margin-top: 4px;
+  background: rgba(5, 5, 5, 0.7);
+  border: 1px solid #3a3a3a;
+  padding: 3px 8px;
+  font-size: 12px;
+  color: #9ab0d0;
+}
+
 /* ─── Main Menu ─── */
 .main-menu {
   display: flex;

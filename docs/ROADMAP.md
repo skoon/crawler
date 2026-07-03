@@ -12,12 +12,12 @@ This document stays high-altitude: *direction and sequencing*, not step-by-step 
 
 ## Where we are
 
-- **Phases 1–3 (M1–M19): complete.** Core foundation, real dungeons, and advanced
+- **Phases 1–3 (M1–M20): complete.** Core foundation, real dungeons, and advanced
   systems are all in: 3D rendering, grid movement, combat, magic/MP, status effects,
   traps & puzzles, multi-level architecture, JSON levels, the in-browser map builder,
-  automap, and NPCs/dialogue/shops.
-- **Current milestone: M20 — Dungeon Modules (ZIP Imports).** Bundling levels, assets,
-  and a manifest into loadable `.zip` campaigns via JSZip.
+  automap, NPCs/dialogue/shops, and ZIP dungeon modules.
+- **Current milestone: M21 — Lighting, Torches & Resting.** Torch timer drives the
+  fog-of-war radius; rest to recover HP with random-encounter risk.
 
 ---
 

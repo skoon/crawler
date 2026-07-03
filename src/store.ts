@@ -36,6 +36,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   encounterTriggers: initialLevel.encounters,
   currentTargetEnemyId: null,
   defendingMemberIds: [],
+  torchDuration: 300,
+  maxTorchDuration: 300,
+  isResting: false,
+  restTimer: 0,
   doorStates: {},
   secretDoorsRevealed: {},
   exploredTiles: {},
@@ -92,6 +96,53 @@ export const useGameStore = create<GameState>((set, get) => ({
       e.id === id ? { ...e, tileX: x, tileY: y } : e
     ),
   })),
+
+  tickTorch: (deltaSeconds) => set((state) => {
+    if (state.torchDuration <= 0) return state
+    const next = Math.max(0, state.torchDuration - deltaSeconds)
+    if (next === 0) {
+      return { torchDuration: 0, log: [...state.log, 'Your torch sputters and dies. Darkness closes in!'] }
+    }
+    return { torchDuration: next }
+  }),
+
+  refillTorch: (seconds) => set((state) => ({
+    torchDuration: Math.min(state.maxTorchDuration, state.torchDuration + seconds),
+  })),
+
+  startRest: () => set((state) => {
+    if (state.isResting) return state
+    return { isResting: true, restTimer: 0, log: [...state.log, 'You make camp and settle down to rest...'] }
+  }),
+
+  stopRest: () => set((state) => {
+    if (!state.isResting) return state
+    return { isResting: false, restTimer: 0, log: [...state.log, 'You break camp and press on.'] }
+  }),
+
+  tickRest: (deltaSeconds) => set((state) => {
+    if (!state.isResting) return state
+    const prevTimer = state.restTimer
+    const nextTimer = prevTimer + deltaSeconds
+    // Recover 1 HP / 1 MP per 2 seconds rested.
+    const healSteps = Math.floor(nextTimer / 2) - Math.floor(prevTimer / 2)
+    if (healSteps <= 0) return { restTimer: nextTimer }
+
+    let anyRecovered = false
+    const party = state.party.map((m) => {
+      if (m.hp <= 0) return m // the unconscious don't recover by resting
+      const newHp = Math.min(m.maxHp, m.hp + healSteps)
+      const newMp = Math.min(m.maxMp, m.mp + healSteps)
+      if (newHp !== m.hp || newMp !== m.mp) anyRecovered = true
+      return { ...m, hp: newHp, mp: newMp }
+    })
+
+    if (!anyRecovered) {
+      // Everyone is topped off — no reason to keep resting.
+      return { isResting: false, restTimer: 0, party, log: [...state.log, 'The party is fully rested.'] }
+    }
+    return { restTimer: nextTimer, party }
+  }),
 
   toggleDoor: (x, y) => set((state) => {
     const key = `${x},${y}`
@@ -201,6 +252,15 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     let logMsg = `${member.name} uses ${item.name}.`
     let newParty = state.party
+
+    if (item.effects.torchRefill !== undefined) {
+      const newTorch = Math.min(state.maxTorchDuration, state.torchDuration + item.effects.torchRefill)
+      return {
+        torchDuration: newTorch,
+        inventory: state.inventory.filter((i) => i.id !== itemId),
+        log: [...state.log, `${member.name} lights a fresh ${item.name}. The darkness retreats.`],
+      }
+    }
 
     if (item.type === 'potion') {
       if (item.effects.hpBonus !== undefined) {

@@ -14,6 +14,9 @@ import { useTrapSystem } from './systems/trapSystem'
 import { useState, useEffect } from 'react'
 import { useFogOfWar } from './systems/fogOfWar'
 import { useStatusEffectsSystem } from './systems/statusEffects'
+import { useTorchTimer } from './hooks/useTorchTimer'
+import { TorchHUD } from './components/TorchHUD'
+import { TorchLighting } from './components/TorchLighting'
 import { MainMenu } from './components/MainMenu'
 import { InGameMenu } from './components/InGameMenu'
 import { Editor } from './components/editor/Editor'
@@ -34,6 +37,7 @@ function Game({ onQuit }: GameProps) {
   useTrapSystem()
   useFogOfWar()
   useStatusEffectsSystem()
+  useTorchTimer(isPaused)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -60,10 +64,11 @@ function Game({ onQuit }: GameProps) {
           <Canvas>
             <color attach="background" args={['#050505']} />
             <fog attach="fog" args={['#050505', 3, 11]} />
-            <ambientLight intensity={0.4} />
+            <TorchLighting />
             <DungeonView />
             <DungeonViewCamera />
           </Canvas>
+          <TorchHUD />
           <CombatOverlay />
           <DialogueOverlay />
           <ShopOverlay />

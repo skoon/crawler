@@ -1,7 +1,7 @@
 # Project Milestone Status
 
-> **Current milestone: M21 — Lighting, Torches & Resting**
-> Light source system, torch timers, and resting to recover HP.
+> **Current milestone: M22 — Ranged Combat & Targeting**
+> Bows/thrown weapons, targeting reticle, LOS + ammo tracking.
 
 ## Phase 1: The Core Foundation
 - [x] **M1: Basic Grid Map & React Setup**
@@ -30,7 +30,7 @@
 - [x] **M20: Dungeon Modules (ZIP Imports)**
 
 ## Phase 4: Atmosphere & Polish
-- [ ] **M21: Lighting, Torches & Resting**
+- [x] **M21: Lighting, Torches & Resting**
 - [ ] **M22: Ranged Combat & Targeting**
 - [ ] **M23: Sound, Music & Atmosphere**
 - [ ] **M24: Character Creation & Party Management**

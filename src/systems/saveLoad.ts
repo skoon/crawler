@@ -19,6 +19,8 @@ export function saveGame(slot: number): boolean {
       encounterTriggers: state.encounterTriggers,
       triggerStates: state.triggerStates,
       switchStates: state.switchStates,
+      torchDuration: state.torchDuration,
+      maxTorchDuration: state.maxTorchDuration,
       timestamp: new Date().toISOString(),
     }
     localStorage.setItem(`${SAVE_PREFIX}${slot}`, JSON.stringify(data))
@@ -51,6 +53,10 @@ export function loadGame(slot: number): boolean {
       encounterTriggers: data.encounterTriggers ?? [],
       triggerStates: data.triggerStates ?? {},
       switchStates: data.switchStates ?? {},
+      torchDuration: data.torchDuration ?? 300,
+      maxTorchDuration: data.maxTorchDuration ?? 300,
+      isResting: false,
+      restTimer: 0,
       activeStatusEffects: [],
     })
     return true

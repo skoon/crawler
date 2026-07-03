@@ -19,6 +19,15 @@ export const itemTemplates: Record<string, Item> = {
     effects: { mpRestore: 10 },
     consumable: true,
   },
+  'torch': {
+    id: 'torch',
+    name: 'Torch',
+    type: 'misc',
+    weight: 1,
+    description: 'A pitch-soaked torch. Refills your light (+180s).',
+    effects: { torchRefill: 180 },
+    consumable: true,
+  },
   'short-sword': {
     id: 'short-sword',
     name: 'Short Sword',

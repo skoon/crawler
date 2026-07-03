@@ -119,6 +119,7 @@ export interface Item {
     conBonus: number;
     damageBonus: number;
     damageDice: string;
+    torchRefill: number;
   }>;
   consumable: boolean;
 }
@@ -192,6 +193,16 @@ export interface GameState {
   encounterTriggers: EncounterTrigger[];
   currentTargetEnemyId: string | null;
   defendingMemberIds: string[];
+
+  torchDuration: number;      // seconds of light remaining
+  maxTorchDuration: number;   // seconds a full torch lasts
+  isResting: boolean;
+  restTimer: number;          // seconds spent in the current rest
+  tickTorch: (deltaSeconds: number) => void;
+  refillTorch: (seconds: number) => void;
+  startRest: () => void;
+  stopRest: () => void;
+  tickRest: (deltaSeconds: number) => void;
 
   selectMember: (index: number) => void;
   addLogMessage: (message: string) => void;
