@@ -4,6 +4,8 @@ import { isSolid, isDoor, isStairs, isSwitch, getTile } from '../map/mapUtils'
 import { TILE_STAIRS_UP, TILE_SECRET_DOOR } from '../types'
 import { useKeyboard } from '../hooks/useKeyboard'
 import { saveGame, loadGame } from './saveLoad'
+import { audio } from './audio'
+import { stairsTravelPlan } from './stairsTravel'
 
 const MOVE_INTERVAL = 150
 
@@ -11,6 +13,7 @@ export function useMovementSystem(isPaused: boolean = false) {
   const keys = useKeyboard()
   const lastMove = useRef(0)
   const restKeyWasDown = useRef(false)
+  const muteKeyWasDown = useRef(false)
 
   useEffect(() => {
     const handler = () => {
@@ -29,6 +32,16 @@ export function useMovementSystem(isPaused: boolean = false) {
         }
       } else if (!rDown) {
         restKeyWasDown.current = false
+      }
+
+      // Mute toggle (edge-detected).
+      const mDown = pressed.has('KeyM')
+      if (mDown && !muteKeyWasDown.current) {
+        muteKeyWasDown.current = true
+        const muted = audio.toggleMute()
+        useGameStore.getState().addLogMessage(muted ? 'Sound muted.' : 'Sound unmuted.')
+      } else if (!mDown) {
+        muteKeyWasDown.current = false
       }
 
       const now = Date.now()
@@ -111,6 +124,7 @@ export function useMovementSystem(isPaused: boolean = false) {
         const tile = getTile(state.dungeonMap, doorX, doorY)
         if (isDoor(tile)) {
           state.toggleDoor(doorX, doorY)
+          audio.playSound('door')
           lastMove.current = now
           return
         }
@@ -165,6 +179,7 @@ export function useMovementSystem(isPaused: boolean = false) {
         const isDoorOpen = isDoor(tile) && state.doorStates[`${targetX},${targetY}`]
         if (!isSolid(tile) || isDoorOpen || isRevealedSecret) {
           useGameStore.getState().setPlayerPosition({ x: targetX, y: targetY })
+          audio.playSound('footstep')
           lastMove.current = now
 
           // Stairs transition
@@ -174,9 +189,11 @@ export function useMovementSystem(isPaused: boolean = false) {
             const transition = currentLevel?.transitions?.find(
               (t) => t.tileX === targetX && t.tileY === targetY
             )
-            if (transition) {
-              const dir = tile === TILE_STAIRS_UP ? 'ascend' : 'descend'
-              fresh.addLogMessage(`You ${dir} the stairs...`)
+            const dir = tile === TILE_STAIRS_UP ? 'ascend' : 'descend'
+            const targetLoaded = !!(transition && fresh.levels[transition.targetLevelId])
+            const plan = stairsTravelPlan({ testMode: fresh.testMode, transition, dir, targetLoaded })
+            if (plan.log) fresh.addLogMessage(plan.log)
+            if (plan.travel && transition) {
               setTimeout(() => {
                 useGameStore.getState().changeLevel(
                   transition.targetLevelId,

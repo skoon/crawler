@@ -15,7 +15,7 @@ const defaultMap: LevelData = {
   items: [],
 }
 
-export type EditorMode = 'paint' | 'start' | 'enemy' | 'item'
+export type EditorMode = 'paint' | 'start' | 'enemy' | 'item' | 'transition'
 
 export function Editor({ onExit, onTest }: { onExit: () => void, onTest: (lvl: LevelData) => void }) {
   const [level, setLevel] = useState<LevelData>(() => {

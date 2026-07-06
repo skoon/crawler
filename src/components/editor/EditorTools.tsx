@@ -1,8 +1,10 @@
 import React, { useRef } from 'react'
-import type { LevelData } from '../../types'
+import type { LevelData, LevelTransition } from '../../types'
+import { TILE_STAIRS_UP } from '../../types'
 import type { EditorMode } from './Editor'
 import { useGameStore } from '../../store'
 import { exportModule, downloadModule } from '../../systems/dungeonModule'
+import { listStairs, getTransition, upsertTransition, removeTransition } from './editorTransitions'
 
 interface Props {
   level: LevelData
@@ -90,8 +92,13 @@ export function EditorTools(props: Props) {
           <button onClick={() => props.onSetMode('start')} className={props.mode === 'start' ? 'active' : ''}>Start Pos</button>
           <button onClick={() => props.onSetMode('enemy')} className={props.mode === 'enemy' ? 'active' : ''}>Enemy</button>
           <button onClick={() => props.onSetMode('item')} className={props.mode === 'item' ? 'active' : ''}>Item</button>
+          <button onClick={() => props.onSetMode('transition')} className={props.mode === 'transition' ? 'active' : ''}>Stairs</button>
         </div>
       </div>
+
+      {props.mode === 'transition' && (
+        <StairsTransitionPanel level={props.level} onUpdateLevel={props.onUpdateLevel} />
+      )}
 
       {props.mode === 'paint' && (
         <div className="editor-panel">
@@ -134,6 +141,117 @@ export function EditorTools(props: Props) {
       </div>
 
       <button onClick={props.onExit} style={{marginTop: 'auto', borderColor: '#8b0000'}}>Exit Editor</button>
+    </div>
+  )
+}
+
+const FACING_LABELS = ['North', 'East', 'South', 'West']
+
+function StairsTransitionPanel({
+  level,
+  onUpdateLevel,
+}: {
+  level: LevelData
+  onUpdateLevel: (level: LevelData) => void
+}) {
+  const stairs = listStairs(level)
+
+  const editField = (
+    x: number,
+    y: number,
+    patch: Partial<LevelTransition>,
+  ) => {
+    const existing = getTransition(level, x, y)
+    const base: LevelTransition = existing ?? {
+      tileX: x,
+      tileY: y,
+      targetLevelId: '',
+      targetPosition: { x: 1, y: 1 },
+      targetFacing: 0,
+    }
+    onUpdateLevel(upsertTransition(level, { ...base, ...patch, tileX: x, tileY: y }))
+  }
+
+  return (
+    <div className="editor-panel">
+      <h3>Stairs Links</h3>
+      {stairs.length === 0 && (
+        <p style={{ fontSize: '11px', color: '#888' }}>
+          Paint a Stairs Up/Down tile first, then link it to a target level here.
+        </p>
+      )}
+      {stairs.map(({ x, y, type }) => {
+        const t = getTransition(level, x, y)
+        const kind = type === TILE_STAIRS_UP ? 'Stairs Up' : 'Stairs Down'
+        return (
+          <div
+            key={`${x},${y}`}
+            style={{ border: '1px solid #333', padding: '6px', marginBottom: '8px', borderRadius: '3px' }}
+          >
+            <div style={{ fontSize: '12px', color: '#cbb98a', marginBottom: '4px' }}>
+              {kind} @ ({x}, {y}) {t ? '' : '— not linked'}
+            </div>
+            <label style={{ display: 'block', fontSize: '11px' }}>
+              Target Level ID:{' '}
+              <input
+                value={t?.targetLevelId ?? ''}
+                placeholder="e.g. catacombs_2"
+                onChange={(e) => editField(x, y, { targetLevelId: e.target.value })}
+                style={{ width: '120px' }}
+              />
+            </label>
+            <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+              <label style={{ fontSize: '11px' }}>
+                X:{' '}
+                <input
+                  type="number"
+                  value={t?.targetPosition.x ?? 1}
+                  onChange={(e) =>
+                    editField(x, y, {
+                      targetPosition: { x: Number(e.target.value), y: t?.targetPosition.y ?? 1 },
+                    })
+                  }
+                  style={{ width: '44px' }}
+                />
+              </label>
+              <label style={{ fontSize: '11px' }}>
+                Y:{' '}
+                <input
+                  type="number"
+                  value={t?.targetPosition.y ?? 1}
+                  onChange={(e) =>
+                    editField(x, y, {
+                      targetPosition: { x: t?.targetPosition.x ?? 1, y: Number(e.target.value) },
+                    })
+                  }
+                  style={{ width: '44px' }}
+                />
+              </label>
+              <label style={{ fontSize: '11px' }}>
+                Facing:{' '}
+                <select
+                  value={t?.targetFacing ?? 0}
+                  onChange={(e) => editField(x, y, { targetFacing: Number(e.target.value) })}
+                >
+                  {FACING_LABELS.map((label, i) => (
+                    <option key={i} value={i}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {t && (
+              <button
+                onClick={() => onUpdateLevel(removeTransition(level, x, y))}
+                style={{ marginTop: '4px', fontSize: '11px', borderColor: '#8b0000', color: '#c88' }}
+              >
+                Unlink
+              </button>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

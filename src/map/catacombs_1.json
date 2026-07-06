@@ -48,6 +48,6 @@
     }
   ],
   "transitions": [
-    { "tileX": 8, "tileY": 5, "targetLevelId": "catacombs_2", "targetPosition": { "x": 8, "y": 2 }, "targetFacing": 0 }
+    { "tileX": 11, "tileY": 11, "targetLevelId": "catacombs_2", "targetPosition": { "x": 8, "y": 2 }, "targetFacing": 0 }
   ]
 }

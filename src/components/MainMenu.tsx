@@ -2,16 +2,16 @@ import { useState, useEffect, useRef } from 'react'
 import { loadGame, getSaveSlots } from '../systems/saveLoad'
 import { importModule } from '../systems/dungeonModule'
 import { useGameStore } from '../store'
-import catacombsLevel from '../map/catacombs_1.json'
-import catacombsLevel2 from '../map/catacombs_2.json'
-import type { LevelData } from '../types'
+import { startNewGame } from '../systems/newGame'
+import { buildTemplateChars, makePartyMember, partyTemplates } from '../systems/characterCreation'
 
 interface Props {
+  onNewGame: () => void
   onStart: () => void
   onEditor: () => void
 }
 
-export function MainMenu({ onStart, onEditor }: Props) {
+export function MainMenu({ onNewGame, onStart, onEditor }: Props) {
   const [view, setView] = useState<'main' | 'about' | 'load'>('main')
   const [slots, setSlots] = useState<{ slot: number; timestamp: string }[]>([])
   const moduleInputRef = useRef<HTMLInputElement>(null)
@@ -28,11 +28,12 @@ export function MainMenu({ onStart, onEditor }: Props) {
     }
   }
 
-  const handleNewGame = () => {
-    const store = useGameStore.getState()
-    store.registerLevel(catacombsLevel as LevelData)
-    store.registerLevel(catacombsLevel2 as LevelData)
-    store.changeLevel('catacombs_1', catacombsLevel.startPosition, catacombsLevel.startFacing)
+  const handleQuickStart = () => {
+    const balanced = partyTemplates[0]
+    const party = buildTemplateChars(balanced, '3d6').map((c, i) =>
+      makePartyMember(String(i + 1), c.name, c.classId, c.stats),
+    )
+    startNewGame(party)
     onStart()
   }
 
@@ -90,7 +91,8 @@ export function MainMenu({ onStart, onEditor }: Props) {
     <div className="main-menu">
       <h1>Dungeon of the Catacombs</h1>
       <h2>A First-Person Dungeon Crawl</h2>
-      <button onClick={handleNewGame}>New Game</button>
+      <button onClick={onNewGame}>New Game</button>
+      <button onClick={handleQuickStart}>Quick Start</button>
       <button onClick={() => setView('load')}>Load Game</button>
       <button onClick={() => moduleInputRef.current?.click()}>Load Module (.zip)</button>
       <button onClick={onEditor}>Level Editor</button>

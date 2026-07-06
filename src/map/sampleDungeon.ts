@@ -72,6 +72,7 @@ export const level1: LevelData = {
           text: 'Hello, children. I am Decimus, a priest of the Light. The catacombs below are crawling with undead. How can I help you?',
           choices: [
             { text: 'We are wounded, holy father. Can you heal us?', nextNodeId: 'heal', action: 'heal_party' },
+            { text: 'A companion has fallen. Can you restore them to life?', nextNodeId: 'heal', action: 'resurrect_party' },
             { text: 'Tell us about this place.', nextNodeId: 'info' },
             { text: 'Goodbye.', nextNodeId: null }
           ]
@@ -116,6 +117,33 @@ export const level1: LevelData = {
           choices: [
             { text: "Let's trade, then.", nextNodeId: null, action: 'open_shop' },
             { text: 'I see. Let me think about it.', nextNodeId: 'start' }
+          ]
+        }
+      }
+    },
+    {
+      id: 'thane',
+      name: 'Thane the Veteran',
+      tileX: 3,
+      tileY: 1,
+      color: '#caa060',
+      dialogueStartNodeId: 'start',
+      dialogueNodes: {
+        start: {
+          id: 'start',
+          text: "I'm Thane, an old campaigner. Spill enough blood and you'll be ready to advance. Shall I train your party?",
+          choices: [
+            { text: 'Train us.', nextNodeId: 'start', action: 'train_party' },
+            { text: 'What does training do?', nextNodeId: 'info' },
+            { text: 'Not now.', nextNodeId: null }
+          ]
+        },
+        info: {
+          id: 'info',
+          text: "Experience hardens a body. When you've earned enough, I'll turn it into muscle and grit — more health, and sharper magic for those who wield it.",
+          choices: [
+            { text: 'Then train us.', nextNodeId: 'start', action: 'train_party' },
+            { text: 'Understood.', nextNodeId: null }
           ]
         }
       }

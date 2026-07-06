@@ -1,3 +1,5 @@
+import type { LevelUpResult } from './data/levelProgression';
+
 export type EquipSlot = 'weapon' | 'armor' | 'shield' | 'ring1' | 'ring2';
 
 export interface PartyMember {
@@ -17,6 +19,7 @@ export interface PartyMember {
   wis: number;
   cha: number;
   xp: number;
+  xpToNextLevel: number;
   status: string[];
   equipment: Partial<Record<EquipSlot, Item>>;
 }
@@ -162,7 +165,7 @@ export interface StatusEffect {
 export interface DialogueChoice {
   text: string;
   nextNodeId: string | null; // null ends conversation
-  action?: 'open_shop' | 'heal_party';
+  action?: 'open_shop' | 'heal_party' | 'resurrect_party' | 'train_party';
 }
 
 export interface DialogueNode {
@@ -207,7 +210,18 @@ export interface GameState {
   stopRest: () => void;
   tickRest: (deltaSeconds: number) => void;
 
+  gameOver: boolean;
+  deathSaveTimers: Record<string, number>; // memberId -> rounds until permanent death
+  pendingLevelUps: LevelUpResult[];
+  processDeathSaves: () => void;
+  resetGameOver: () => void;
+  addXp: (amount: number) => void;
+  levelUp: (memberIndex: number) => void;
+  resurrect: (memberIndex: number) => void;
+  clearPendingLevelUps: () => void;
+
   selectMember: (index: number) => void;
+  setParty: (party: PartyMember[]) => void;
   addLogMessage: (message: string) => void;
   setPlayerPosition: (pos: TilePosition) => void;
   setPlayerFacing: (facing: number) => void;
@@ -255,6 +269,9 @@ export interface GameState {
   restoreMp: (memberIndex: number, amount: number) => void;
   addStatusEffect: (effect: StatusEffect) => void;
   removeStatusEffect: (effectId: string) => void;
+
+  testMode: boolean;
+  setTestMode: (v: boolean) => void;
 
   currentLevelId: string;
   levels: Record<string, LevelData>;

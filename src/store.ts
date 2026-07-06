@@ -3,12 +3,14 @@ import type { GameState, PartyMember, LevelData, LevelScopedState } from './type
 import { level1, level2 } from './map/sampleDungeon'
 import { isOpaque, isDoor } from './map/mapUtils'
 import { itemTemplates } from './data/items'
+import { getXpThreshold, rollHitPoints, getStatModifier, type LevelUpResult } from './data/levelProgression'
+import { classDefs } from './data/classDefinitions'
 
 const party: PartyMember[] = [
-  { id: '1', name: 'Aldric', class: 'Fighter', level: 1, hp: 12, maxHp: 12, mp: 0, maxMp: 0, ac: 18, str: 16, dex: 12, con: 14, int: 10, wis: 8, cha: 11, xp: 0, status: [], equipment: {} },
-  { id: '2', name: 'Elara', class: 'Mage', level: 1, hp: 6, maxHp: 6, mp: 20, maxMp: 20, ac: 10, str: 8, dex: 10, con: 10, int: 17, wis: 14, cha: 12, xp: 0, status: [], equipment: {} },
-  { id: '3', name: 'Brother Malek', class: 'Cleric', level: 1, hp: 10, maxHp: 10, mp: 15, maxMp: 15, ac: 16, str: 12, dex: 10, con: 12, int: 12, wis: 16, cha: 14, xp: 0, status: [], equipment: {} },
-  { id: '4', name: 'Shadow', class: 'Thief', level: 1, hp: 8, maxHp: 8, mp: 0, maxMp: 0, ac: 14, str: 10, dex: 16, con: 10, int: 13, wis: 10, cha: 9, xp: 0, status: [], equipment: {} },
+  { id: '1', name: 'Aldric', class: 'Fighter', level: 1, hp: 12, maxHp: 12, mp: 0, maxMp: 0, ac: 18, str: 16, dex: 12, con: 14, int: 10, wis: 8, cha: 11, xp: 0, xpToNextLevel: 100, status: [], equipment: {} },
+  { id: '2', name: 'Elara', class: 'Mage', level: 1, hp: 6, maxHp: 6, mp: 20, maxMp: 20, ac: 10, str: 8, dex: 10, con: 10, int: 17, wis: 14, cha: 12, xp: 0, xpToNextLevel: 100, status: [], equipment: {} },
+  { id: '3', name: 'Brother Malek', class: 'Cleric', level: 1, hp: 10, maxHp: 10, mp: 15, maxMp: 15, ac: 16, str: 12, dex: 10, con: 12, int: 12, wis: 16, cha: 14, xp: 0, xpToNextLevel: 100, status: [], equipment: {} },
+  { id: '4', name: 'Shadow', class: 'Thief', level: 1, hp: 8, maxHp: 8, mp: 0, maxMp: 0, ac: 14, str: 10, dex: 16, con: 10, int: 13, wis: 10, cha: 9, xp: 0, xpToNextLevel: 100, status: [], equipment: {} },
 ]
 
 function buildLevelRegistry(): Record<string, LevelData> {
@@ -52,6 +54,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   triggerStates: {},
   switchStates: {},
   currentLevelId: initialLevel.id,
+  testMode: false,
+  gameOver: false,
+  deathSaveTimers: {},
+  pendingLevelUps: [],
   gold: 100,
   activeNpcId: null,
   currentDialogueNodeId: null,
@@ -61,6 +67,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   perLevelStates: {},
 
   selectMember: (index) => set({ selectedMemberIndex: index }),
+  setParty: (party) => set({ party, selectedMemberIndex: 0 }),
   addLogMessage: (message) => set((state) => ({ log: [...state.log, message] })),
   setPlayerPosition: (pos) => set({ playerPosition: pos }),
   setPlayerFacing: (facing) => set({ playerFacing: facing }),
@@ -82,11 +89,122 @@ export const useGameStore = create<GameState>((set, get) => ({
     ),
   })),
 
-  damageMember: (index, amount) => set((state) => ({
-    party: state.party.map((m, i) =>
-      i === index ? { ...m, hp: Math.max(0, m.hp - amount) } : m
-    ),
-  })),
+  damageMember: (index, amount) => set((state) => {
+    const member = state.party[index]
+    if (!member) return state
+    const isDead = member.status.includes('Dead')
+    // The truly dead can't be healed — only resurrection brings them back.
+    if (isDead && amount < 0) return state
+
+    const newHp = Math.max(0, Math.min(member.maxHp, member.hp - amount))
+    let status = member.status
+    const timers = { ...state.deathSaveTimers }
+
+    if (newHp <= 0 && !isDead) {
+      if (!status.includes('Unconscious')) status = [...status, 'Unconscious']
+      if (timers[member.id] === undefined) timers[member.id] = 3
+    } else if (newHp > 0) {
+      // Recovered above 0 — clear the downed states and stop the bleed-out clock.
+      if (status.includes('Unconscious') || status.includes('Dead')) {
+        status = status.filter((s) => s !== 'Unconscious' && s !== 'Dead')
+      }
+      delete timers[member.id]
+    }
+
+    return {
+      party: state.party.map((m, i) => (i === index ? { ...m, hp: newHp, status } : m)),
+      deathSaveTimers: timers,
+    }
+  }),
+
+  processDeathSaves: () => set((state) => {
+    const timers = { ...state.deathSaveTimers }
+    const logs: string[] = []
+    const party = state.party.map((m) => {
+      if (m.hp <= 0 && !m.status.includes('Dead')) {
+        const remaining = (timers[m.id] ?? 3) - 1
+        if (remaining <= 0) {
+          delete timers[m.id]
+          logs.push(`${m.name} has succumbed to their wounds!`)
+          return { ...m, status: [...m.status.filter((s) => s !== 'Unconscious'), 'Dead'] }
+        }
+        timers[m.id] = remaining
+      }
+      return m
+    })
+    const allDown = party.every((m) => m.hp <= 0)
+    return {
+      party,
+      deathSaveTimers: timers,
+      log: logs.length ? [...state.log, ...logs] : state.log,
+      gameOver: allDown ? true : state.gameOver,
+    }
+  }),
+
+  resetGameOver: () => set({ gameOver: false, deathSaveTimers: {} }),
+
+  addXp: (amount) => set((state) => {
+    const living = state.party.filter((m) => !m.status.includes('Dead'))
+    if (living.length === 0 || amount <= 0) return state
+    const share = Math.max(1, Math.floor(amount / living.length))
+    return {
+      party: state.party.map((m) => (m.status.includes('Dead') ? m : { ...m, xp: m.xp + share })),
+      log: [...state.log, `The party gains ${share} XP each.`],
+    }
+  }),
+
+  levelUp: (memberIndex) => set((state) => {
+    const m = state.party[memberIndex]
+    if (!m || m.status.includes('Dead')) return state
+    if (m.xp < m.xpToNextLevel) return state
+
+    const newLevel = m.level + 1
+    const hpGain = Math.max(1, rollHitPoints(m.class) + getStatModifier(m.con))
+
+    let mpGain = 0
+    const def = classDefs[m.class]
+    if (def?.casting) {
+      const statVal = (m as unknown as Record<string, number>)[def.casting.stat]
+      mpGain = 2 + Math.max(0, getStatModifier(statVal))
+    }
+
+    const result: LevelUpResult = { memberId: m.id, name: m.name, newLevel, hpGained: hpGain, mpGained: mpGain }
+    return {
+      party: state.party.map((x, i) =>
+        i === memberIndex
+          ? {
+              ...x,
+              level: newLevel,
+              maxHp: x.maxHp + hpGain,
+              hp: x.hp + hpGain,
+              maxMp: x.maxMp + mpGain,
+              mp: x.mp + mpGain,
+              xpToNextLevel: getXpThreshold(newLevel),
+            }
+          : x,
+      ),
+      pendingLevelUps: [...state.pendingLevelUps, result],
+      log: [...state.log, `${m.name} reaches level ${newLevel}!`],
+    }
+  }),
+
+  resurrect: (memberIndex) => set((state) => {
+    const m = state.party[memberIndex]
+    if (!m || !m.status.includes('Dead')) return state
+    const timers = { ...state.deathSaveTimers }
+    delete timers[m.id]
+    return {
+      party: state.party.map((x, i) =>
+        i === memberIndex
+          ? { ...x, hp: 1, status: x.status.filter((s) => s !== 'Dead' && s !== 'Unconscious') }
+          : x,
+      ),
+      deathSaveTimers: timers,
+      log: [...state.log, `${m.name} is restored to life!`],
+    }
+  }),
+
+  clearPendingLevelUps: () => set({ pendingLevelUps: [] }),
 
   setDefending: (memberIndex, defending) => set((state) => ({
     defendingMemberIds: defending
@@ -501,10 +619,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     })
   },
 
+  setTestMode: (v) => set({ testMode: v }),
+
   loadLevel: (level) => {
     const state = get()
     const levels = { ...state.levels, [level.id]: level }
-    set({ levels })
+    // loadLevel is the editor's "Test Map" entry point — flag it as a test session.
+    set({ levels, testMode: true })
     state.changeLevel(level.id, level.startPosition, level.startFacing)
   },
 
@@ -522,7 +643,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     for (const lvl of moduleLevels) newLevels[lvl.id] = lvl
     const entry = newLevels[entryLevelId] ?? moduleLevels[0]
     // Start the campaign fresh: drop any previously saved per-level state.
-    set({ levels: newLevels, perLevelStates: {} })
+    set({ levels: newLevels, perLevelStates: {}, testMode: false })
     get().changeLevel(entry.id, entry.startPosition, entry.startFacing)
   },
 
@@ -540,29 +661,62 @@ export const useGameStore = create<GameState>((set, get) => ({
     const nextNodeId = choice.nextNodeId
     const action = choice.action
 
+    // Opening the shop keeps the conversation open, so handle it and bail early.
     if (action === 'open_shop') {
       set({ showShop: true })
-    } else if (action === 'heal_party') {
-      const newParty = get().party.map((m) => ({
-        ...m,
-        hp: m.maxHp,
-        mp: m.maxMp,
-      }))
+      return
+    }
+
+    if (action === 'heal_party') {
+      const timers = { ...get().deathSaveTimers }
+      const newParty = get().party.map((m) => {
+        if (m.status.includes('Dead')) return m // only resurrection revives the dead
+        delete timers[m.id]
+        return { ...m, hp: m.maxHp, mp: m.maxMp, status: m.status.filter((s) => s !== 'Unconscious') }
+      })
       set({
         party: newParty,
+        deathSaveTimers: timers,
         log: [...get().log, 'The priest heals your wounds and restores your magic!'],
       })
-      if (nextNodeId === null) {
-        set({ activeNpcId: null, currentDialogueNodeId: null })
-      } else {
-        set({ currentDialogueNodeId: nextNodeId })
+    } else if (action === 'resurrect_party') {
+      const st = get()
+      const timers = { ...st.deathSaveTimers }
+      let any = false
+      const newParty = st.party.map((m) => {
+        if (!m.status.includes('Dead')) return m
+        any = true
+        delete timers[m.id]
+        return { ...m, hp: 1, status: m.status.filter((s) => s !== 'Dead' && s !== 'Unconscious') }
+      })
+      set({
+        party: newParty,
+        deathSaveTimers: timers,
+        log: [...st.log, any ? 'The priest calls your fallen companions back from death!' : 'None of your companions need resurrection.'],
+      })
+    } else if (action === 'train_party') {
+      let leveled = false
+      get().party.forEach((_, i) => {
+        let guard = 0
+        while (
+          guard < 20 &&
+          !get().party[i].status.includes('Dead') &&
+          get().party[i].xp >= get().party[i].xpToNextLevel
+        ) {
+          get().levelUp(i)
+          leveled = true
+          guard++
+        }
+      })
+      if (!leveled) {
+        set({ log: [...get().log, 'None of your party has enough experience to train yet.'] })
       }
+    }
+
+    if (nextNodeId === null) {
+      set({ activeNpcId: null, currentDialogueNodeId: null })
     } else {
-      if (nextNodeId === null) {
-        set({ activeNpcId: null, currentDialogueNodeId: null })
-      } else {
-        set({ currentDialogueNodeId: nextNodeId })
-      }
+      set({ currentDialogueNodeId: nextNodeId })
     }
   },
 

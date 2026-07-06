@@ -16,8 +16,9 @@ This document stays high-altitude: *direction and sequencing*, not step-by-step 
   systems are all in: 3D rendering, grid movement, combat, magic/MP, status effects,
   traps & puzzles, multi-level architecture, JSON levels, the in-browser map builder,
   automap, NPCs/dialogue/shops, and ZIP dungeon modules.
-- **Current milestone: M23 — Sound, Music & Atmosphere.** M21 (torches/resting) and
-  M22 (ranged combat, targeting, ammo) are complete; next is ambient audio and SFX.
+- **Current milestone: M25 — Death, Progression & Game Over.** M21–M24 are complete
+  (torches/resting, ranged combat, sound/music, character creation). M25 is the final
+  Phase 4 milestone: death saves, TPK game-over, XP/leveling, resurrection & training.
 
 ---
 

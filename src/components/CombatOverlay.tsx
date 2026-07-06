@@ -6,6 +6,7 @@ import { processEnemyTurn } from '../systems/enemyAI'
 import { resolveRangedAttack, isRangedWeapon, enemyAt, hasLineOfSight, tileDistance } from '../systems/rangedCombat'
 import { spells } from '../data/spells'
 import { createStatusEffect, processStatusEffects, canAct, getEffectiveAc } from '../systems/statusEffects'
+import { audio } from '../systems/audio'
 import type { Spell } from '../types'
 
 export function CombatOverlay() {
@@ -32,6 +33,7 @@ export function CombatOverlay() {
   const setTargetPosition = useGameStore((s) => s.setTargetPosition)
 
   const enemyTurnRef = useRef(false)
+  const victoryHandledRef = useRef(false)
   const [showItemMenu, setShowItemMenu] = useState(false)
   const [showCastMenu, setShowCastMenu] = useState(false)
   const [selectedSpell, setSelectedSpell] = useState<Spell | null>(null)
@@ -63,9 +65,16 @@ export function CombatOverlay() {
 
   useEffect(() => {
     if (combatState === 'victory') {
+      // Award the fallen enemies' XP once per fight (guarded against re-runs).
+      if (!victoryHandledRef.current) {
+        victoryHandledRef.current = true
+        const total = useGameStore.getState().enemies.reduce((sum, e) => sum + e.xp, 0)
+        if (total > 0) useGameStore.getState().addXp(total)
+      }
       const timer = setTimeout(() => endCombat(), 2000)
       return () => clearTimeout(timer)
     }
+    victoryHandledRef.current = false
   }, [combatState, endCombat])
 
   const handleRangedStart = () => {
@@ -134,6 +143,7 @@ export function CombatOverlay() {
       return
     }
 
+    audio.playSound('bow')
     const targetAc = getEffectiveAc(enemy.ac, activeStatusEffects, enemy.id)
     const result = resolveRangedAttack(
       member.dex,
@@ -144,14 +154,17 @@ export function CombatOverlay() {
     if (result.hit) {
       damageEnemy(enemy.id, result.damage)
       addLogMessage(`${member.name} shoots ${enemy.name} for ${result.damage} damage!`)
+      audio.playPositional('hit', enemy.tileX, enemy.tileY)
     } else {
       addLogMessage(`${member.name}'s shot sails past ${enemy.name}.`)
+      audio.playSound('miss')
     }
 
     handleRangedCancel()
     processStatusEffects()
 
     const targetDied = result.hit && enemy.hp <= result.damage
+    if (targetDied) audio.playPositional('death', enemy.tileX, enemy.tileY)
     const remaining = targetDied ? aliveEnemies.filter((e) => e.id !== enemy.id) : aliveEnemies
     if (remaining.length === 0) {
       addLogMessage('All enemies defeated!')
@@ -192,18 +205,22 @@ export function CombatOverlay() {
     const weaponDice = weapon?.effects.damageDice
     const weaponBonus = weapon?.effects.damageBonus
 
+    audio.playSound('swing')
     const targetAc = getEffectiveAc(target.ac, activeStatusEffects, target.id)
     const result = resolvePlayerAttack(member.str, targetAc, weaponDice, weaponBonus)
     if (result.hit) {
       damageEnemy(target.id, result.damage)
       addLogMessage(`${member.name} attacks ${target.name} for ${result.damage} damage!`)
+      audio.playPositional('hit', target.tileX, target.tileY)
     } else {
       addLogMessage(`${member.name} misses ${target.name}.`)
+      audio.playSound('miss')
     }
 
     processStatusEffects()
 
     const targetDied = result.hit && target.hp <= result.damage
+    if (targetDied) audio.playPositional('death', target.tileX, target.tileY)
     const remaining = targetDied
       ? aliveEnemies.filter((e) => e.id !== target.id)
       : aliveEnemies
@@ -279,6 +296,7 @@ export function CombatOverlay() {
 
     spendMp(selectedIndex, spell.mpCost)
     addLogMessage(`${member.name} casts ${spell.name}!`)
+    audio.playSound(spell.id === 'heal' ? 'heal' : 'cast')
 
     switch (spell.id) {
       case 'magic-missile': {

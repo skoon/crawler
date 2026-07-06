@@ -2,6 +2,7 @@ import { useGameStore } from '../store'
 import { isWalkable } from '../map/mapUtils'
 import { resolveEnemyAttack } from './combatResolution'
 import { canAct, getEffectiveAc } from './statusEffects'
+import { audio } from './audio'
 
 interface Point {
   x: number
@@ -94,11 +95,14 @@ export function processEnemyTurn() {
       const baseAc = target.ac - acBonus
       const effectiveAc = getEffectiveAc(baseAc, state.activeStatusEffects, target.id)
       const result = resolveEnemyAttack(enemy.thac0, enemy.damage, enemy.damageBonus, effectiveAc)
+      audio.playSound('swing')
       if (result.hit) {
         state.damageMember(targetIdx, result.damage)
         state.addLogMessage(`${enemy.name} hits ${target.name} for ${result.damage} damage!`)
+        audio.playPositional('hit', enemy.tileX, enemy.tileY)
       } else {
         state.addLogMessage(`${enemy.name} misses ${target.name}.`)
+        audio.playSound('miss')
       }
     } else {
       const path = findPath(dungeonMap, enemy.tileX, enemy.tileY, playerPosition.x, playerPosition.y)
@@ -114,11 +118,14 @@ export function processEnemyTurn() {
     }
   }
 
-  const allDead = party.every((m) => m.hp <= 0)
-  if (allDead) {
-    state.setCombatState('defeat')
+  // End of round: tick bleed-out timers on downed members (may flag game over),
+  // then decide the outcome from the *fresh* party state.
+  state.processDeathSaves()
+  const fresh = useGameStore.getState()
+  if (fresh.gameOver || fresh.party.every((m) => m.hp <= 0)) {
+    fresh.setCombatState('defeat')
   } else {
-    state.setCombatState('playerTurn')
+    fresh.setCombatState('playerTurn')
   }
-  state.setDefending(state.selectedMemberIndex, false)
+  fresh.setDefending(fresh.selectedMemberIndex, false)
 }

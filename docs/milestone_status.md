@@ -1,7 +1,7 @@
 # Project Milestone Status
 
-> **Current milestone: M23 — Sound, Music & Atmosphere**
-> Ambient audio, footsteps, combat SFX, positional 3D sound, music.
+> **Current milestone: M25 — Death, Progression & Game Over**
+> Death saves, TPK game-over, XP/leveling, resurrection & training.
 
 ## Phase 1: The Core Foundation
 - [x] **M1: Basic Grid Map & React Setup**
@@ -32,6 +32,6 @@
 ## Phase 4: Atmosphere & Polish
 - [x] **M21: Lighting, Torches & Resting**
 - [x] **M22: Ranged Combat & Targeting**
-- [ ] **M23: Sound, Music & Atmosphere**
-- [ ] **M24: Character Creation & Party Management**
+- [x] **M23: Sound, Music & Atmosphere**
+- [x] **M24: Character Creation & Party Management**
 - [ ] **M25: Death, Progression & Game Over**

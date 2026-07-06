@@ -38,7 +38,10 @@ export function loadGame(slot: number): boolean {
     if (!raw) return false
     const data = JSON.parse(raw)
     useGameStore.setState({
-      party: data.party,
+      party: (data.party ?? []).map((m: Record<string, unknown>) => ({ xpToNextLevel: 100, ...m })),
+      gameOver: false,
+      deathSaveTimers: {},
+      pendingLevelUps: [],
       playerPosition: data.playerPosition,
       playerFacing: data.playerFacing,
       log: [...data.log, `Game loaded from slot ${slot}.`],
@@ -61,6 +64,7 @@ export function loadGame(slot: number): boolean {
       maxTorchDuration: data.maxTorchDuration ?? 300,
       isResting: false,
       restTimer: 0,
+      testMode: false,
       activeStatusEffects: [],
     })
     return true

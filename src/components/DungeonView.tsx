@@ -255,6 +255,9 @@ export function DungeonView() {
             position={[enemy.tileX * TILE_SIZE + TILE_SIZE / 2, 1.2, enemy.tileY * TILE_SIZE + TILE_SIZE / 2]}
             color={ENEMY_COLORS[enemy.name] ?? '#c44'}
             label={enemy.name}
+            idleSfx="growl"
+            tileX={enemy.tileX}
+            tileY={enemy.tileY}
           />
         )),
     [enemies],

@@ -18,7 +18,14 @@ import { useTorchTimer } from './hooks/useTorchTimer'
 import { TorchHUD } from './components/TorchHUD'
 import { TorchLighting } from './components/TorchLighting'
 import { TargetingReticle } from './components/TargetingReticle'
+import { useAudioManager } from './systems/audio'
+import { useAmbientAudio } from './systems/ambientAudio'
+import { useMusicManager } from './systems/musicManager'
 import { MainMenu } from './components/MainMenu'
+import { CharacterCreation } from './components/CharacterCreation'
+import { GameOverScreen } from './components/GameOverScreen'
+import { LevelUpModal } from './components/LevelUpModal'
+import { startNewGame } from './systems/newGame'
 import { InGameMenu } from './components/InGameMenu'
 import { Editor } from './components/editor/Editor'
 import './App.css'
@@ -39,6 +46,7 @@ function Game({ onQuit }: GameProps) {
   useFogOfWar()
   useStatusEffectsSystem()
   useTorchTimer(isPaused)
+  useAmbientAudio()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -79,6 +87,7 @@ function Game({ onQuit }: GameProps) {
           <DialogueOverlay />
           <ShopOverlay />
           <Automap />
+          <LevelUpModal />
           {isPaused && <InGameMenu onClose={() => setIsPaused(false)} onQuit={onQuit} />}
         </div>
       </main>
@@ -90,23 +99,63 @@ function Game({ onQuit }: GameProps) {
 }
 
 function App() {
-  const [route, setRoute] = useState<'menu' | 'game' | 'editor'>('menu')
+  const [route, setRoute] = useState<'menu' | 'creation' | 'game' | 'editor'>('menu')
+  const gameOver = useGameStore((s) => s.gameOver)
+  useAudioManager()
+  useMusicManager(route === 'creation' ? 'menu' : route)
 
   if (route === 'editor') {
-    return <Editor 
-      onExit={() => setRoute('menu')} 
+    return <Editor
+      onExit={() => setRoute('menu')}
       onTest={(lvl) => {
         useGameStore.getState().loadLevel(lvl)
         setRoute('game')
-      }} 
+      }}
     />
   }
 
-  if (route === 'game') {
-    return <Game onQuit={() => setRoute('menu')} />
+  if (route === 'creation') {
+    return (
+      <CharacterCreation
+        onCancel={() => setRoute('menu')}
+        onComplete={(party) => {
+          startNewGame(party)
+          setRoute('game')
+        }}
+      />
+    )
   }
 
-  return <MainMenu onStart={() => setRoute('game')} onEditor={() => setRoute('editor')} />
+  if (route === 'game') {
+    return (
+      <>
+        <Game onQuit={() => setRoute('menu')} />
+        {gameOver && (
+          <GameOverScreen
+            onNewGame={() => {
+              useGameStore.getState().resetGameOver()
+              setRoute('creation')
+            }}
+            onQuit={() => {
+              useGameStore.getState().resetGameOver()
+              setRoute('menu')
+            }}
+            onLoaded={() => {
+              /* loadGame already cleared gameOver; stay in the game route */
+            }}
+          />
+        )}
+      </>
+    )
+  }
+
+  return (
+    <MainMenu
+      onNewGame={() => setRoute('creation')}
+      onStart={() => setRoute('game')}
+      onEditor={() => setRoute('editor')}
+    />
+  )
 }
 
 export default App
